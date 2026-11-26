@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bolas RA</title>
+<meta name="theme-color" content="#0b1630">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+  :root{--bg:#0b1630;--fg:#fff;--ac:#ff3fb4}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif}
+  #intro{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;padding:24px}
+  h1{margin:0;font-size:48px;letter-spacing:-1px}
+  p{max-width:620px;line-height:1.5;opacity:.85;margin:0}
+  button{font-size:26px;padding:18px 40px;border-radius:999px;border:0;background:var(--ac);color:#fff;font-weight:700}
+  button:disabled{background:#556;opacity:.6}
+  #msg{font-size:14px;opacity:.6}
+  canvas{display:block}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three/three.module.js",
+  "three/addons/": "./vendor/three/addons/"
+} }
+</script>
+</head>
+<body>
+<div id="intro">
+  <h1>Bolas RA</h1>
+  <p>Primero se escanea tu habitación. Después caerán pelotas del techo.
+     Cógelas con la pinza, lánzalas a las canastas, contra las paredes o contra otra <b>igual</b> para fusionarlas.</p>
+  <button id="go" disabled>Comprobando WebXR…</button>
+  <div id="msg"></div>
+</div>
+<script type="module" src="main.js"></script>
+<script>
+  // modo sin internet: guarda el juego en las gafas la primera vez que se abre
+  if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(e => console.warn('[bolas] sw', e)));
+</script>
+</body>
+</html>

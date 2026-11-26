@@ -1,0 +1,4 @@
+*.bak.js
+build/
+*.apk
+.DS_Store
