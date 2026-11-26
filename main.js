@@ -1662,15 +1662,15 @@ function beginPlay() {
 }
 
 // ---------- Arranque ----------
+// En el navegador: botón «Empezar en RA». Como aplicación instalada (APK en modo inmersivo) la sesión
+// de RA se pide sola al abrir; si el sistema exige un gesto, queda el botón como respaldo.
 const btn = document.getElementById('go'), msg = document.getElementById('msg');
-async function check() {
-  if (!navigator.xr) { btn.textContent = 'WebXR no disponible'; msg.textContent = 'Abre esta página en el navegador de la Meta Quest 3 (http://localhost o https).'; return; }
-  const ok = await navigator.xr.isSessionSupported('immersive-ar').catch(() => false);
-  if (!ok) { btn.textContent = 'RA no soportada'; msg.textContent = 'Este navegador no admite immersive-ar. Usa la Meta Quest 3.'; return; }
-  btn.disabled = false; btn.textContent = 'Empezar en RA';
-}
-btn.addEventListener('click', async () => {
-  initAudio(); actx.resume();
+const IS_APP = matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
+const xrLog = [];
+let starting = false;
+async function startAR(auto) {
+  if (starting || state !== 'intro') return; starting = true;
+  initAudio(); actx.resume().catch(() => {});
   try {
     const session = await navigator.xr.requestSession('immersive-ar', {
       requiredFeatures: ['local-floor'],
@@ -1679,10 +1679,27 @@ btn.addEventListener('click', async () => {
     await renderer.xr.setSession(session);
     document.getElementById('intro').style.display = 'none';
     state = 'scan'; scanT0 = -1; foundAt = 0; lastT = 0;
-    session.addEventListener('end', () => location.reload());
-  } catch (e) { console.error('[bolas]', e); msg.textContent = 'No se pudo iniciar la sesión RA: ' + e.message; }
-});
-window.__bolas = { hands, balls, rk, gest, lastThrows, hoops, bins, holes, debris, get score() { return score; }, get state() { return state; },
+    xrLog.push((auto ? 'auto' : 'botón') + ': sesión iniciada');
+    session.addEventListener('end', () => { if (IS_APP) sessionStorage.setItem('bolas-fin', '1'); location.reload(); });
+    // el audio puede quedar suspendido sin gesto: se reanuda con la primera interacción
+    session.addEventListener('selectstart', () => actx.resume().catch(() => {}), { once: true });
+  } catch (e) {
+    xrLog.push((auto ? 'auto' : 'botón') + ': ' + e.name + ' ' + e.message);
+    console.warn('[bolas]', e);
+    if (!auto) msg.textContent = 'No se pudo iniciar la realidad mixta.';
+  }
+  starting = false;
+}
+async function check() {
+  if (!navigator.xr) { btn.textContent = 'WebXR no disponible'; msg.textContent = 'Abre esta página en el navegador de la Meta Quest 3.'; return; }
+  const ok = await navigator.xr.isSessionSupported('immersive-ar').catch(() => false);
+  xrLog.push('app=' + IS_APP + ' immersive-ar=' + ok);
+  btn.disabled = false; btn.textContent = 'Empezar en RA';
+  if (IS_APP && !sessionStorage.getItem('bolas-fin')) startAR(true);   // como app: directa a la RA
+  else if (!ok) msg.textContent = 'Este navegador no parece admitir realidad mixta; puedes intentarlo igualmente.';
+}
+btn.addEventListener('click', () => startAR(false));
+window.__bolas = { xrLog, hands, balls, rk, gest, lastThrows, hoops, bins, holes, debris, get score() { return score; }, get state() { return state; },
   get floorY() { return floorY; }, get ceilY() { return ceilY; }, get room() { return roomValid ? [roomMin.toArray(), roomMax.toArray()] : null; } };
 renderer.setAnimationLoop(loop);
 check();
