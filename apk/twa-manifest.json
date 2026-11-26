@@ -1,0 +1,52 @@
+{
+  "packageId": "com.smussull.bolasra",
+  "host": "smussull.github.io",
+  "name": "Bolas RA",
+  "launcherName": "Bolas RA",
+  "display": "standalone",
+  "themeColor": "#0B1630",
+  "themeColorDark": "#0B1630",
+  "navigationColor": "#0B1630",
+  "navigationColorDark": "#0B1630",
+  "navigationDividerColor": "#0B1630",
+  "navigationDividerColorDark": "#0B1630",
+  "backgroundColor": "#0B1630",
+  "enableNotifications": false,
+  "enableMicrophone": false,
+  "enableXRScene": false,
+  "startUrl": "/bolas-ra/",
+  "iconUrl": "https://smussull.github.io/bolas-ra/icons/icon-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./bolas-ra.keystore",
+    "alias": "android"
+  },
+  "appVersionCode": 3,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://smussull.github.io/bolas-ra/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": false,
+  "isChromeOSOnly": false,
+  "isMetaQuest": true,
+  "horizonOSAppMode": "2D",
+  "fullScopeUrl": "https://smussull.github.io/bolas-ra/",
+  "minSdkVersion": 23,
+  "orientation": "landscape",
+  "fingerprints": [
+    {
+      "value": "72:C3:09:00:4B:1D:99:49:9A:9C:08:4E:9E:63:EA:0E:52:FF:DB:E2:09:9C:45:B5:14:EF:94:35:75:B8:A9:E0"
+    }
+  ],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [],
+  "appVersionName": "1.2"
+}

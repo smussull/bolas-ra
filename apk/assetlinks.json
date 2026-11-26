@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.smussull.bolasra",
+        "sha256_cert_fingerprints": ["72:C3:09:00:4B:1D:99:49:9A:9C:08:4E:9E:63:EA:0E:52:FF:DB:E2:09:9C:45:B5:14:EF:94:35:75:B8:A9:E0"]
+      }
+    }]
