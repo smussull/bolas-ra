@@ -3,6 +3,8 @@
 Juego de realidad mixta (WebXR) para Meta Quest 3: se escanea la habitación, caen pelotas de goma del techo,
 se cogen con la pinza o el puño, se lanzan a canastas con diana, rompen las paredes (detrás hay un mundo Matrix)
 y dos pelotas iguales se fusionan. Juntar los puños y separarlos saca o guarda una raqueta.
+El gesto V (victoria) saca o guarda una pistola de juguete que dispara pelotas al doblar el índice (mandos: A/X y gatillo).
+Las pelotas caen desde encima del techo: el techo es permeable desde arriba y sólido desde abajo.
 
 - Jugar en el navegador de la Quest: https://smussull.github.io/bolas-ra/
 - Funciona sin internet después de abrirlo una vez (service worker `sw.js`).

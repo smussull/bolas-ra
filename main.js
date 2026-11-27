@@ -523,14 +523,14 @@ function rebuildColliders() {
   colPlanes = [...virtualPlanes];
   let fy = Infinity, cy = -Infinity; const floorTriY = [], ceilTriY = [];
   for (const d of planes.values()) {
-    const up = d.n.y > 0.8, down = d.n.y < -0.8, y = d.mat.elements[13];
     let mat = d.mat, inv = d.inv, n = d.n, poly = d.poly;
-    // La Quest da algunas paredes con la normal hacia fuera de la habitación: se giran para que
-    // miren hacia dentro (hacia el jugador). Giro de 180° sobre el eje Z local: x→-x, y→-y.
-    if (Math.abs(d.n.y) < 0.3 && _v.setFromMatrixPosition(d.mat).sub(headPos).negate().dot(d.n) < 0) {
+    // La Quest da algunas superficies (paredes, techo) con la normal hacia fuera de la habitación:
+    // se giran para que miren hacia el jugador. Giro de 180° sobre el eje Z local: x→-x, y→-y.
+    if (_v.setFromMatrixPosition(d.mat).sub(headPos).negate().dot(d.n) < 0) {
       mat = d.mat.clone().multiply(_flipZ); inv = mat.clone().invert(); n = d.n.clone().negate();
       poly = new Float32Array(d.poly); for (let i = 0; i < poly.length; i += 2) poly[i] = -poly[i];
     }
+    const up = n.y > 0.8, down = n.y < -0.8, y = mat.elements[13];
     colPlanes.push({ mat, inv, n, poly, area: d.area, label: d.label, up, down,
       wall: Math.abs(n.y) < 0.3 && (d.label === 'wall' || d.label === '') });
     if (up && (d.label === 'floor' || d.area > 2)) fy = Math.min(fy, y);
@@ -719,7 +719,7 @@ function updateDrops(head) {
     }
     if (d.ring) { const k = 1 - Math.max(0, d.at - now) / 0.45; d.ring.scale.setScalar(0.3 + k); d.ring.material.opacity = 0.9 * (1 - k * 0.5); }
     if (now >= d.at && d.pos) {
-      const r = BALL_R * rnd(0.88, 1.12), p = d.pos.clone(); p.y = d.pos.y - r - 0.01;   // justo bajo el techo en ese punto
+      const r = BALL_R * rnd(0.88, 1.12), p = d.pos.clone(); p.y = Math.max(d.pos.y, floorY + 2.2) + 0.3 + r;   // por encima del techo: lo atraviesa al caer
       makeBall(d.t, r, p, new THREE.Vector3(rnd(-0.2, 0.2), -0.3, rnd(-0.2, 0.2)));
       sndDrop(p); scene.remove(d.ring); d.ring.material.dispose(); drops.splice(i, 1);
     }
@@ -767,14 +767,18 @@ function readInput(frame, ref, src, H) {
     basisQuat(f, n, _qn);
     if (H.qInit) H.q.slerp(_qn, 0.6); else { H.q.copy(_qn); H.qInit = true; }
     H.pinch = th.distanceTo(ix);
-    H.fist = (ix.distanceTo(H.palm) + md.distanceTo(H.palm) + rg.distanceTo(H.palm) + pk.distanceTo(H.palm)) / 4;
+    const dIx = ix.distanceTo(H.palm), dMd = md.distanceTo(H.palm), dRg = rg.distanceTo(H.palm), dPk = pk.distanceTo(H.palm);
+    H.fist = (dIx + dMd + dRg + dPk) / 4;
+    H.ixExt = dIx;
+    // gesto V: índice y corazón estirados y separados, anular y meñique doblados
+    H.vSign = dIx > 0.1 && dMd > 0.1 && dRg < 0.08 && dPk < 0.08 && ix.distanceTo(md) > 0.035;
     if (!H.raw) {
       if (H.pinch < PINCH_ON) { H.raw = true; H.mode = 'pinza'; }
       else if (H.fist < FIST_ON) { H.raw = true; H.mode = 'puño'; }
     } else H.raw = H.pinch < PINCH_OFF || H.fist < FIST_OFF;
     H.wrist = wr;
     H.colPts = [[H.palm, 0.035], [ix, 0.011], [md, 0.011], [rg, 0.011], [pk, 0.010], [th, 0.012]];
-    H.colActive = !H.raw && !H.ball && rk.holder !== H && H.pinch > 0.05;
+    H.colActive = !H.raw && !H.ball && rk.holder !== H && gun.holder !== H && H.pinch > 0.05;
     return true;
   }
   if (src.gripSpace) {
@@ -790,7 +794,7 @@ function readInput(frame, ref, src, H) {
     H.raw = !!(bt[1]?.pressed || bt[0]?.pressed); H.mode = 'botón';
     H.wrist = H.palm.clone();
     H.colPts = [[H.palm, 0.04]];
-    H.colActive = !H.raw && !H.ball && rk.holder !== H;
+    H.colActive = !H.raw && !H.ball && rk.holder !== H && gun.holder !== H;
     return true;
   }
   return false;
@@ -821,7 +825,7 @@ function updateHands(frame, ref, dt) {
 
     // bola candidata
     let best = null, bd = GRAB_REACH;
-    if (!H.ball && rk.holder !== H) {
+    if (!H.ball && rk.holder !== H && gun.holder !== H) {
       const hp = holdWorld(H, BALL_R, V()), pts = [hp, ...H.colPts.map(c => c[0])];
       for (const b of balls) {
         if (b.held) continue;
@@ -832,7 +836,7 @@ function updateHands(frame, ref, dt) {
     else if (H.ball && !H.raw) release(H);          // instantáneo: en el primer frame con la mano abierta
 
     const hp = holdWorld(H, H.ball ? H.ball.r : BALL_R, V());
-    H.cur.visible = rk.holder !== H; H.cur.position.copy(hp);
+    H.cur.visible = rk.holder !== H && gun.holder !== H; H.cur.position.copy(hp);
     H.cur.material.color.set(H.ball ? 0x3bf08a : H.raw ? 0xffd23a : 0xffffff);
     H.halo.visible = !!best && !H.ball;
     if (best) { H.halo.position.copy(best.pos); H.halo.scale.setScalar(best.r * 1.18); H.halo.material.color.set(TYPE_COLORS[best.t]); }
@@ -1017,6 +1021,93 @@ function racketCollide(k, n, dtFrame) {
   }
 }
 
+// ---------- Pistola de juguete (gesto V) ----------
+// Gesto V (índice y corazón estirados, anular y meñique doblados) mantenido un momento: aparece la
+// pistola en esa mano; repetirlo la guarda. Disparo: doblar el índice como al apretar un gatillo.
+// Con mandos: botón A/X la saca o guarda y el gatillo dispara.
+const GUN_SPEED = 9;                       // m/s de la bola al salir
+const V_HOLD = 0.35;                       // s manteniendo la V
+const TRIG_ON = 0.085, TRIG_OFF = 0.1;     // índice punta→palma: doblado / estirado
+const gun = { holder: null, group: new THREE.Group(), model: new THREE.Group(), kick: 0, lastToggle: -9,
+  muzzle: new THREE.Vector3(0, 0.045, -0.43), trigger: null, hopperBalls: [] };
+(function buildGun() {
+  const g = gun.model;
+  const mat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.45, metalness: 0.1, ...extra });
+  const orange = mat(0xff7a1a), blue = mat(0x2b6cff), yellow = mat(0xffd21f), dark = mat(0x23272f, { roughness: 0.7 });
+  const add = (geo, m, x, y, z, rx = 0) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.rotation.x = rx; g.add(o); return o; };
+  add(new THREE.BoxGeometry(0.075, 0.095, 0.27), orange, 0, 0.03, -0.1);                                  // cuerpo
+  add(new THREE.BoxGeometry(0.08, 0.02, 0.2), yellow, 0, -0.022, -0.12);                                   // franja
+  add(new THREE.CylinderGeometry(0.03, 0.034, 0.2, 28).rotateX(Math.PI / 2), blue, 0, 0.045, -0.32);       // cañón
+  add(new THREE.TorusGeometry(0.036, 0.009, 10, 32), yellow, 0, 0.045, -0.42);                              // boca
+  add(new THREE.BoxGeometry(0.055, 0.14, 0.065), blue, 0, -0.08, 0.015, 0.28);                             // empuñadura
+  add(new THREE.TorusGeometry(0.028, 0.006, 8, 24, Math.PI).rotateZ(Math.PI / 2).rotateY(Math.PI / 2), dark, 0, -0.03, -0.045);   // guardamonte
+  gun.trigger = add(new THREE.BoxGeometry(0.012, 0.035, 0.014), yellow, 0, -0.035, -0.04, 0.3);            // gatillo
+  const dome = add(new THREE.SphereGeometry(0.055, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, roughness: 0.05, clearcoat: 1 }), 0, 0.077, -0.06);
+  for (let i = 0; i < 3; i++) gun.hopperBalls.push(add(new THREE.SphereGeometry(0.022, 16, 10), TYPES[i * 2].mat, (i - 1) * 0.026, 0.1, -0.06));
+  gun.group.add(g); gun.group.visible = false; scene.add(gun.group);
+})();
+const _gx = new THREE.Vector3(), _gy = new THREE.Vector3(), _gz = new THREE.Vector3(), _gf = new THREE.Vector3(), _gm = new THREE.Matrix4();
+function gunAxes(H) {   // adelante = hacia los dedos; arriba = lado del pulgar (el dorso del puño en la empuñadura)
+  const F = _gf.set(0, 1, 0).applyQuaternion(H.q), U = _gy.set(1, 0, 0).applyQuaternion(H.q).multiplyScalar(H.key === 'right' ? 1 : -1);
+  return { F, U };
+}
+function toggleGun(H) {
+  gun.lastToggle = now;
+  if (gun.holder === H) { gun.holder = null; sndZip(H.palm, false); }
+  else { gun.holder = H; H.trig = true; sndZip(H.palm, true); if (H.ball) release(H, true); }
+  pulse(H, 0.6, 60);
+}
+function updateGun(dt) {
+  for (const H of Object.values(hands)) {
+    if (!H.ok) { H.vT = 0; continue; }
+    if (H.isCtrl) {                                  // mandos: A / X saca o guarda la pistola
+      const bt = H.src?.gamepad?.buttons || [], a = !!bt[4]?.pressed;
+      if (a && !H.aPrev && now - gun.lastToggle > 0.4 && rk.holder !== H) toggleGun(H);
+      H.aPrev = a;
+    } else {
+      if (!H.vSign) H.vLock = false;                 // hay que deshacer la V antes de volver a usarla
+      H.vT = H.vSign && !H.vLock && !H.ball && rk.holder !== H ? (H.vT || 0) + dt : 0;
+      if (H.vT > V_HOLD && now - gun.lastToggle > 0.8) { H.vT = 0; H.vLock = true; toggleGun(H); }
+    }
+  }
+  const H = gun.holder;
+  if (!H || !H.ok) { gun.group.visible = false; return; }
+  // colocar la pistola en la mano: empuñadura en la palma, cañón hacia delante
+  const { F, U } = gunAxes(H);
+  _gx.crossVectors(U, _gz.copy(F).negate());
+  _gm.makeBasis(_gx, U, _gz);   // Z del modelo = -adelante
+  gun.group.quaternion.setFromRotationMatrix(_gm);
+  gun.group.position.copy(H.palm).addScaledVector(U, 0.035);
+  gun.kick = Math.max(0, gun.kick - dt * 8);
+  gun.model.position.z = gun.kick * 0.04; gun.model.rotation.x = gun.kick * 0.25;
+  gun.group.visible = true;
+  // gatillo
+  let pull = false;
+  if (H.isCtrl) { const t = !!H.src?.gamepad?.buttons?.[0]?.pressed; pull = t && !H.trig; H.trig = t; gun.trigger.rotation.x = t ? -0.2 : 0.3; }
+  else {
+    if (!H.trig && H.ixExt < TRIG_ON) { H.trig = true; pull = true; }
+    else if (H.trig && H.ixExt > TRIG_OFF) H.trig = false;
+    gun.trigger.rotation.x = H.trig ? -0.2 : 0.3;
+  }
+  if (pull) fireGun(H, F);
+  gun.hopperBalls.forEach((b, i) => { b.position.y = 0.1 + Math.sin(now * 9 + i * 2) * 0.006; });
+}
+function fireGun(H, F) {
+  gun.group.updateMatrixWorld(true);
+  const p = gun.muzzle.clone().applyMatrix4(gun.group.matrixWorld);
+  const hv = H.cols && H.cols[0] ? H.cols[0].v : V();
+  const b = makeBall(Math.floor(Math.random() * TYPES.length), BALL_R * rnd(0.9, 1.05), p, F.clone().multiplyScalar(GUN_SPEED).add(hv));
+  b.thrownAt = now; b.grow = 0.7; b.w.set(rnd(-8, 8), rnd(-8, 8), rnd(-8, 8));
+  // sin pasarse del máximo: se quita la bola más antigua que no esté en una mano
+  if (balls.length > MAX_BALLS + 20) { const old = balls.find(o => !o.held && o !== b); if (old) removeBall(old); }
+  gun.kick = 1; pulse(H, 0.7, 40); sndShoot(p);
+}
+function sndShoot(pos) {
+  if (!actx) return;
+  const t = actx.currentTime, p = panAt(pos);
+  tone(p, 420, 'square', 0.12, t, 0.09, 140); noise(p, 0.35, t, 0.07, 1800); tone(p, 90, 'sine', 0.4, t, 0.12, 50);
+}
+
 // ---------- Física ----------
 const mergeQ = [], _rv = V(), _rt = V(), _l2 = V(), _wc = V(), _zero = V();
 // Fricción en el punto de contacto con giro: el deslizamiento se convierte en rodadura (esfera hueca, I = 2/3·m·r²)
@@ -1079,6 +1170,7 @@ function collideWorld(b, h, kin) {
         const sc = (p.x - tris[o]) * tnx + (p.y - tris[o + 1]) * tny + (p.z - tris[o + 2]) * tnz;
         if (d2 >= r * r) continue;
         if (holes.length && inHole(cpx, cpy, cpz, 0)) continue;
+        if (Math.abs(tny) > 0.7 && cpy > floorY + 1.9 && b.prev.y > cpy) continue;   // techo permeable desde arriba
         if (sp * sc < 0 && Math.abs(sp) > 1e-4) {        // el centro ha cruzado el triángulo: devolverla a su lado
           const s = sp > 0 ? 1 : -1; contact(b, tnx * s, tny * s, tnz * s, r + Math.abs(sc), h, kin);
         } else {
@@ -1098,7 +1190,7 @@ function collideWorld(b, h, kin) {
     if (p.z < roomMin.z + r) contact(b, 0, 0, 1, roomMin.z + r - p.z, h, kin);
     if (p.z > roomMax.z - r) contact(b, 0, 0, -1, p.z - roomMax.z + r, h, kin);
   }
-  if (p.y > ceilY - r) contact(b, 0, -1, 0, p.y - ceilY + r, h, kin);
+  if (p.y > ceilY - r && b.prev.y <= ceilY - r + 0.02) contact(b, 0, -1, 0, p.y - ceilY + r, h, kin);   // solo desde abajo
 }
 function canMerge(a, b) { return a.held || b.held || now - a.thrownAt < MERGE_WINDOW || now - b.thrownAt < MERGE_WINDOW; }
 
@@ -1659,6 +1751,7 @@ function loop(t, frame) {
     updateDrops(headPos);
     updateHands(frame, ref, dt);
     updateRacket(dt);
+    updateGun(dt);
     racketVsWalls(dt);
     updateHeld(dt);
     physics(dt);
@@ -1737,7 +1830,7 @@ async function check() {
   else if (!ok) msg.textContent = 'Este navegador no parece admitir realidad mixta; puedes intentarlo igualmente.';
 }
 btn.addEventListener('click', () => startAR(false));
-window.__bolas = { ceilingAt, xrLog, hands, balls, rk, gest, lastThrows, hoops, bins, holes, debris, get score() { return score; }, get state() { return state; },
+window.__bolas = { gun, ceilingAt, xrLog, hands, balls, rk, gest, lastThrows, hoops, bins, holes, debris, get score() { return score; }, get state() { return state; },
   get floorY() { return floorY; }, get ceilY() { return ceilY; }, get room() { return roomValid ? [roomMin.toArray(), roomMax.toArray()] : null; } };
 renderer.setAnimationLoop(loop);
 check();
