@@ -1,6 +1,6 @@
 // Service worker: guarda todos los archivos del juego para que funcione sin internet.
 // Al cambiar cualquier archivo del juego, sube la versión para que las gafas descarguen la nueva.
-const VERSION = 'bolas-ra-v4';
+const VERSION = 'bolas-ra-v5';
 const FILES = ['./', 'index.html', 'main.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png',
   'vendor/three/three.module.js', 'vendor/three/addons/environments/RoomEnvironment.js'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES))); self.skipWaiting(); });

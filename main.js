@@ -59,58 +59,47 @@ function canvasTex(draw, w = 512, h = 256) {
 }
 const rnd = (a, b) => a + Math.random() * (b - a);
 
-const texStripes = canvasTex((g, w, h) => {
-  g.fillStyle = '#e8322a'; g.fillRect(0, 0, w, h);
-  g.fillStyle = '#fff'; g.fillRect(0, h * 0.44, w, h * 0.12);
-  g.fillStyle = '#ffd23a'; g.fillRect(0, h * 0.2, w, h * 0.05); g.fillRect(0, h * 0.75, w, h * 0.05);
-  g.fillStyle = '#fff'; for (let i = 0; i < 4; i++) { g.beginPath(); g.arc(w * (i + 0.5) / 4, h * 0.5, 14, 0, 7); g.fill(); }
+// Paleta minimalista: blancos, grises claros y pastel. Cada tipo tiene un dibujo suave para ver el giro.
+const texRosa = canvasTex((g, w, h) => {
+  g.fillStyle = '#f2a9ba'; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#fbfbfc'; g.fillRect(0, h * 0.45, w, h * 0.1);
+  g.fillStyle = '#e88aa1'; g.fillRect(0, h * 0.24, w, h * 0.035); g.fillRect(0, h * 0.725, w, h * 0.035);
 });
-const texSteel = canvasTex((g, w, h) => {
-  g.fillStyle = '#d0d6dd'; g.fillRect(0, 0, w, h);
-  for (let i = 0; i < 1400; i++) { g.fillStyle = `rgba(${Math.random() < .5 ? '255,255,255' : '60,70,80'},${rnd(.05, .18)})`; g.fillRect(rnd(0, w), rnd(0, h), rnd(20, 90), 1); }
-  g.fillStyle = '#5b636c'; g.fillRect(0, h * 0.49, w, 4); g.fillRect(w * 0.25, 0, 4, h); g.fillRect(w * 0.75, 0, 4, h);
+const texMenta = canvasTex((g, w, h) => {
+  g.fillStyle = '#9fdcc3'; g.fillRect(0, 0, w, h); g.fillStyle = '#f2faf6';
+  for (let i = 0; i < 8; i++) for (let j = 0; j < 4; j++) { g.beginPath(); g.arc((i + (j % 2) * 0.5) * w / 8, (j + 0.5) * h / 4, 13, 0, 7); g.fill(); }
 });
-const texWood = canvasTex((g, w, h) => {
-  g.fillStyle = '#b8743f'; g.fillRect(0, 0, w, h);
-  for (let y = 0; y < h; y += 3) {
-    const k = Math.sin(y * 0.11) * 0.5 + Math.sin(y * 0.037) * 0.5;
-    g.fillStyle = `rgba(90,45,15,${0.15 + 0.25 * Math.abs(k)})`;
-    g.beginPath(); g.moveTo(0, y);
-    for (let x = 0; x <= w; x += 16) g.lineTo(x, y + Math.sin(x * 0.02 + y * 0.05) * 3);
-    g.lineTo(w, y + 2); g.lineTo(0, y + 2); g.fill();
-  }
-  g.fillStyle = 'rgba(70,35,10,.6)'; g.beginPath(); g.ellipse(w * .3, h * .4, 18, 8, 0, 0, 7); g.fill();
+const texLavanda = canvasTex((g, w, h) => {
+  g.fillStyle = '#c2b2ee'; g.fillRect(0, 0, w, h); g.strokeStyle = '#a593e3'; g.lineWidth = 9;
+  for (let k = 0; k < 6; k++) { g.beginPath(); for (let x = 0; x <= w; x += 6) { const y = h * (k + 0.5) / 6 + Math.sin(x / w * Math.PI * 4 + k) * 9; x ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); }
 });
-const texTennis = canvasTex((g, w, h) => {
-  g.fillStyle = '#d4ee3a'; g.fillRect(0, 0, w, h);
-  for (let i = 0; i < 3000; i++) { g.fillStyle = `rgba(255,255,200,${rnd(0, .25)})`; g.fillRect(rnd(0, w), rnd(0, h), 2, 2); }
-  g.strokeStyle = '#fbfff0'; g.lineWidth = 10; g.beginPath();
+const texCielo = canvasTex((g, w, h) => {
+  g.fillStyle = '#9fc5ef'; g.fillRect(0, 0, w, h); g.fillStyle = '#eef5fc';
+  for (let i = 0; i < 8; i++) for (let j = 0; j < 4; j++) if ((i + j) % 2) g.fillRect(i * w / 8, j * h / 4, w / 8, h / 4);
+});
+const texCrema = canvasTex((g, w, h) => {
+  g.fillStyle = '#f2d47c'; g.fillRect(0, 0, w, h);
+  g.strokeStyle = '#fffaf0'; g.lineWidth = 10; g.beginPath();
   for (let x = 0; x <= w; x += 4) { const y = h / 2 + Math.sin(x / w * Math.PI * 4) * h * 0.28; x ? g.lineTo(x, y) : g.moveTo(x, y); }
   g.stroke();
 });
-const texNeon = canvasTex((g, w, h) => {
-  g.fillStyle = '#2a0030'; g.fillRect(0, 0, w, h);
-  const n = 8, m = 4;
-  for (let i = 0; i < n; i++) for (let j = 0; j < m; j++) if ((i + j) % 2 === 0) { g.fillStyle = '#ff2fd0'; g.fillRect(i * w / n, j * h / m, w / n, h / m); }
-  g.fillStyle = '#7dfcff'; for (let i = 0; i < n; i++) for (let j = 0; j < m; j++) if ((i + j) % 2) { g.beginPath(); g.arc((i + .5) * w / n, (j + .5) * h / m, 10, 0, 7); g.fill(); }
+const texPerla = canvasTex((g, w, h) => {
+  g.fillStyle = '#e3e7ec'; g.fillRect(0, 0, w, h); g.strokeStyle = '#b9c1cb'; g.lineWidth = 4;
+  for (let x = 0; x < w; x += w / 8) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
+  g.beginPath(); g.moveTo(0, h / 2); g.lineTo(w, h / 2); g.stroke();
 });
-const texGlass = canvasTex((g, w, h) => {
-  const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#bfe6ff'); gr.addColorStop(.5, '#3a9cff'); gr.addColorStop(1, '#0b3d91');
-  g.fillStyle = gr; g.fillRect(0, 0, w, h);
-  g.fillStyle = 'rgba(255,255,255,.5)'; for (let i = 0; i < 40; i++) { g.beginPath(); g.arc(rnd(0, w), rnd(0, h), rnd(2, 7), 0, 7); g.fill(); }
-});
-
 // Todas son pelotas de goma ligera; cambian el aspecto y el tono del bote
+const pastel = (map, extra = {}) => new THREE.MeshStandardMaterial({ map, roughness: 0.6, envMapIntensity: 0.5, ...extra });
 const TYPES = [
-  { name: 'Roja',    snd: 190, mat: new THREE.MeshStandardMaterial({ map: texStripes, roughness: 0.55 }) },
-  { name: 'Plata',   snd: 230, mat: new THREE.MeshStandardMaterial({ map: texSteel, metalness: 0.7, roughness: 0.3 }) },
-  { name: 'Madera',  snd: 165, mat: new THREE.MeshStandardMaterial({ map: texWood, roughness: 0.7 }) },
-  { name: 'Tenis',   snd: 260, mat: new THREE.MeshStandardMaterial({ map: texTennis, roughness: 1 }) },
-  { name: 'Cristal', snd: 300, mat: new THREE.MeshPhysicalMaterial({ map: texGlass, roughness: 0.08, clearcoat: 1, transparent: true, opacity: 0.8 }) },
-  { name: 'Neón',    snd: 340, mat: new THREE.MeshStandardMaterial({ map: texNeon, emissiveMap: texNeon, emissive: 0xffffff, emissiveIntensity: 0.9, roughness: 0.4 }) },
+  { name: 'Rosa',     snd: 190, mat: pastel(texRosa) },
+  { name: 'Menta',    snd: 230, mat: pastel(texMenta) },
+  { name: 'Lavanda',  snd: 165, mat: pastel(texLavanda) },
+  { name: 'Cielo',    snd: 260, mat: pastel(texCielo) },
+  { name: 'Crema',    snd: 300, mat: pastel(texCrema) },
+  { name: 'Perla',    snd: 340, mat: new THREE.MeshPhysicalMaterial({ map: texPerla, roughness: 0.3, clearcoat: 0.6, clearcoatRoughness: 0.3, envMapIntensity: 0.6 }) },
 ];
 
-const TYPE_COLORS = [0xff4a3a, 0xd8e0e8, 0xc98a52, 0xd4ee3a, 0x4aa8ff, 0xff2fd0];
+const TYPE_COLORS = [0xf2a9ba, 0x9fdcc3, 0xc2b2ee, 0x9fc5ef, 0xf2d47c, 0xd5dbe2];
 
 // ---------- Sombras de contacto ----------
 const shadowTex = canvasTex((g, w, h) => {
@@ -147,6 +136,40 @@ function noise(dest, vol, t0, dur, freq) {
   s.buffer = noiseBuf; s.loop = true; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 1.2;
   g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0005, t0 + dur);
   s.connect(f).connect(g).connect(dest); s.start(t0); s.stop(t0 + dur + 0.02);
+}
+// Música ambiental suave y generativa: acordes de pad lentos y notas sueltas de una escala pentatónica
+let musicGain = null, musicOn = true, musicTimer = null, musicNext = 0, musicStep = 0;
+const CHORDS = [[261.6, 329.6, 392.0, 493.9], [220.0, 261.6, 329.6, 392.0], [174.6, 220.0, 261.6, 329.6], [196.0, 246.9, 293.7, 392.0]];
+const PENTA = [523.3, 587.3, 659.3, 784.0, 880.0, 1046.5];
+function startMusic() {
+  if (!actx || musicTimer) return;
+  musicGain = actx.createGain(); musicGain.gain.value = musicOn ? 0.22 : 0;
+  const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1800;
+  const dl = actx.createDelay(1.0), fb = actx.createGain(); dl.delayTime.value = 0.42; fb.gain.value = 0.32;
+  musicGain.connect(lp).connect(master); lp.connect(dl); dl.connect(fb).connect(dl); dl.connect(master);
+  musicNext = actx.currentTime + 0.2;
+  musicTimer = setInterval(() => {
+    while (musicNext < actx.currentTime + 1.0) {
+      const t = musicNext, ch = CHORDS[Math.floor(musicStep / 8) % CHORDS.length];
+      if (musicStep % 8 === 0) ch.forEach((f, i) => pad(f / (i ? 1 : 2), t, 4.2));     // acorde cada 4 s
+      if (Math.random() < 0.45) pluck(PENTA[Math.floor(Math.random() * PENTA.length)], t);
+      musicNext += 0.5; musicStep++;
+    }
+  }, 250);
+}
+function pad(f, t, dur) {
+  const o = actx.createOscillator(), g = actx.createGain(); o.type = 'triangle'; o.frequency.value = f;
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.09, t + 1.2); g.gain.linearRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(musicGain); o.start(t); o.stop(t + dur + 0.05);
+}
+function pluck(f, t) {
+  const o = actx.createOscillator(), g = actx.createGain(); o.type = 'sine'; o.frequency.value = f;
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.07, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.4);
+  o.connect(g).connect(musicGain); o.start(t); o.stop(t + 1.5);
+}
+function setMusic(on) {
+  musicOn = on;
+  if (musicGain) musicGain.gain.setTargetAtTime(on ? 0.22 : 0, actx.currentTime, 0.3);
 }
 function sndBounce(b, speed) {   // "boing" de goma
   if (!actx) return;
@@ -254,7 +277,7 @@ const wrist = makePanel(0.12, 0.06, { title: 0.36, body: 0.17 });
 // ---------- Instrucciones con dibujos animados (sin texto) ----------
 // Izquierda: la pinza coge la bola y al abrir la mano se lanza.
 // Derecha: juntar los puños y separarlos saca la raqueta; repetirlo la guarda.
-const HOW_INK = '#161616', HOW_SKIN = '#f1ede6', HOW_BALL = '#ff4a3a', HOW_RK = '#17b8ff';
+const HOW_INK = '#2a2d33', HOW_SKIN = '#f4f5f7', HOW_BALL = '#f4b4c4', HOW_RK = '#9fd3f5';
 const ease = k => k < 0 ? 0 : k > 1 ? 1 : k * k * (3 - 2 * k);
 const seg = (t, a, b) => ease((t - a) / (b - a));
 const lerpN = (a, b, k) => a + (b - a) * k;
@@ -437,7 +460,7 @@ const occluderMat = new THREE.ShaderMaterial({
   fragmentShader: `void main(){ gl_FragColor = vec4(0.); }`,
   colorWrite: false, side: THREE.DoubleSide,
 });
-const LABEL_COLOR = { floor: 0x37e6ff, wall: 0x6f7dff, ceiling: 0x9a6bff, table: 0x3bf08a, couch: 0xffb13b, bed: 0xffb13b, screen: 0xff4fa8 };
+const LABEL_COLOR = { floor: 0xbfe3ff, wall: 0xd9d2ff, ceiling: 0xeadcff, table: 0xc9f2dc, couch: 0xffe2c8, bed: 0xffe2c8, screen: 0xffd3e6 };
 
 const planes = new Map();   // XRPlane → datos
 const meshes = new Map();   // XRMesh → datos
@@ -776,7 +799,7 @@ function readInput(frame, ref, src, H) {
       if (H.pinch < PINCH_ON) { H.raw = true; H.mode = 'pinza'; }
       else if (H.fist < FIST_ON) { H.raw = true; H.mode = 'puño'; }
     } else H.raw = H.pinch < PINCH_OFF || H.fist < FIST_OFF;
-    H.wrist = wr;
+    H.wrist = wr; H.n = n.clone(); H.tip = ix.clone();
     H.colPts = [[H.palm, 0.035], [ix, 0.011], [md, 0.011], [rg, 0.011], [pk, 0.010], [th, 0.012]];
     H.colActive = !H.raw && !H.ball && rk.holder !== H && gun.holder !== H && H.pinch > 0.05;
     return true;
@@ -792,7 +815,7 @@ function readInput(frame, ref, src, H) {
     H.av = p.angularVelocity ? new THREE.Vector3(p.angularVelocity.x, p.angularVelocity.y, p.angularVelocity.z) : null;
     const bt = src.gamepad?.buttons || [];
     H.raw = !!(bt[1]?.pressed || bt[0]?.pressed); H.mode = 'botón';
-    H.wrist = H.palm.clone();
+    H.wrist = H.palm.clone(); H.n = n.clone(); H.tip = H.palm.clone().addScaledVector(f, 0.07);
     H.colPts = [[H.palm, 0.04]];
     H.colActive = !H.raw && !H.ball && rk.holder !== H && gun.holder !== H;
     return true;
@@ -837,7 +860,7 @@ function updateHands(frame, ref, dt) {
 
     const hp = holdWorld(H, H.ball ? H.ball.r : BALL_R, V());
     H.cur.visible = rk.holder !== H && gun.holder !== H; H.cur.position.copy(hp);
-    H.cur.material.color.set(H.ball ? 0x3bf08a : H.raw ? 0xffd23a : 0xffffff);
+    H.cur.material.color.set(H.ball ? 0xa9e4cf : H.raw ? 0xf6df94 : 0xffffff);
     H.halo.visible = !!best && !H.ball;
     if (best) { H.halo.position.copy(best.pos); H.halo.scale.setScalar(best.r * 1.18); H.halo.material.color.set(TYPE_COLORS[best.t]); }
   }
@@ -927,7 +950,7 @@ function updateHeld(dt) {
 const rk = { holder: null, valid: false, p0: V(), p1: V(), q0: new THREE.Quaternion(), q1: new THREE.Quaternion(),
   M0: new THREE.Matrix4(), M1: new THREE.Matrix4(), group: new THREE.Group() };
 (function buildRacket() {
-  const g = rk.group, frameMat = new THREE.MeshStandardMaterial({ color: 0x17d4ff, emissive: 0x0a6a90, emissiveIntensity: 0.8, metalness: 0.3, roughness: 0.35 });
+  const g = rk.group, frameMat = new THREE.MeshStandardMaterial({ color: 0xf4f6f8, emissive: 0x9fd3f5, emissiveIntensity: 0.25, metalness: 0.2, roughness: 0.35 });
   const ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.07, 10, 64), frameMat);
   ring.scale.set(RK.ax, RK.ay, RK.ax); ring.position.y = RK.hy; g.add(ring);
   const face = new THREE.Mesh(new THREE.CircleGeometry(1, 48), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.08, side: THREE.DoubleSide, depthWrite: false }));
@@ -937,13 +960,13 @@ const rk = { holder: null, valid: false, p0: V(), p1: V(), q0: new THREE.Quatern
   for (let y = -RK.ay + 0.016; y < RK.ay; y += 0.019) { const w = RK.ax * Math.sqrt(Math.max(0, 1 - (y / RK.ay) ** 2)); pts.push(-w, RK.hy + y, 0, w, RK.hy + y, 0); }
   const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
   g.add(new THREE.LineSegments(sg, new THREE.LineBasicMaterial({ color: 0xf4fbff, transparent: true, opacity: 0.75 })));
-  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.016, 0.2, 16), new THREE.MeshStandardMaterial({ color: 0x222831, roughness: 0.8 }));
+  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.016, 0.2, 16), new THREE.MeshStandardMaterial({ color: 0xc9ced6, roughness: 0.8 }));
   handle.position.y = 0.04; g.add(handle);
   const throat = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.012, RK.hy - RK.ay - 0.14, 10), frameMat);
   throat.position.y = 0.14 + (RK.hy - RK.ay - 0.14) / 2; g.add(throat);
   g.visible = false; scene.add(g);
 })();
-const pullLine = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 1, 10), new THREE.MeshBasicMaterial({ color: 0x7ff4ff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending }));
+const pullLine = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 1, 10), new THREE.MeshBasicMaterial({ color: 0xcfe9ff, transparent: true, opacity: 0.9 }));
 pullLine.visible = false; scene.add(pullLine);
 const gest = { phase: 'idle', t: 0 };
 const _Y = new THREE.Vector3(0, 1, 0), _one = new THREE.Vector3(1, 1, 1);
@@ -1033,7 +1056,8 @@ const gun = { holder: null, group: new THREE.Group(), model: new THREE.Group(), 
 (function buildGun() {
   const g = gun.model;
   const mat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.45, metalness: 0.1, ...extra });
-  const orange = mat(0xff7a1a), blue = mat(0x2b6cff), yellow = mat(0xffd21f), dark = mat(0x23272f, { roughness: 0.7 });
+  // pistola en blanco y pastel: cuerpo blanco, cañón y empuñadura azul cielo, detalles rosa y crema
+  const orange = mat(0xf5f6f8), blue = mat(0xa9cdf2), yellow = mat(0xf4b4c4), dark = mat(0xc9ced6, { roughness: 0.7 });
   const add = (geo, m, x, y, z, rx = 0) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.rotation.x = rx; g.add(o); return o; };
   add(new THREE.BoxGeometry(0.075, 0.095, 0.27), orange, 0, 0.03, -0.1);                                  // cuerpo
   add(new THREE.BoxGeometry(0.08, 0.02, 0.2), yellow, 0, -0.022, -0.12);                                   // franja
@@ -1328,7 +1352,7 @@ function updateBallVisuals(dt, head) {
 // ---------- Canastas y papelera ----------
 // Son agujeros profundos: la bola que entra por arriba cae dentro, aterriza en la diana del fondo
 // y puntúa según el anillo (centro 100 · 50 · 30 · 20).
-const HR = 0.255, NET_H = 0.3;    // canasta de pared: radio de la boca y profundidad
+const HR = 0.2, NET_H = 0.25;      // canasta de pared: radio de la boca y profundidad
 const BR = 0.51, BH = 0.45;       // canasta de suelo: radio y altura
 const BOTTOM_K = 0.82;            // el fondo es un poco más estrecho que la boca
 const hoops = [], bins = [], swallowed = [];
@@ -1339,26 +1363,26 @@ const netTex = canvasTex((g, w, h) => {
   g.clearRect(0, 0, w, h);
   const step = 64, rope = (x0, y0, x1, y1) => {
     g.lineCap = 'round';
-    g.strokeStyle = 'rgba(70,22,6,0.95)'; g.lineWidth = 12; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
-    g.strokeStyle = '#ff7a2e'; g.lineWidth = 8; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
-    g.strokeStyle = 'rgba(255,190,130,0.9)'; g.lineWidth = 2; g.setLineDash([5, 6]); g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); g.setLineDash([]);
+    g.strokeStyle = 'rgba(140,146,156,0.75)'; g.lineWidth = 12; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+    g.strokeStyle = '#f8f9fb'; g.lineWidth = 8; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+    g.strokeStyle = 'rgba(205,211,219,0.9)'; g.lineWidth = 2; g.setLineDash([5, 6]); g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); g.setLineDash([]);
   };
   for (let x = -h; x < w + h; x += step) { rope(x, 0, x + h, h); rope(x + h, 0, x, h); }
-  g.fillStyle = '#ffa060';
+  g.fillStyle = '#e4e8ed';
   for (let x = 0; x <= w; x += step) for (let y = 0; y <= h; y += step) { g.beginPath(); g.arc(x + (y / step % 2 ? step / 2 : 0), y, 8, 0, 7); g.fill(); }
 }, 512, 256);
 netTex.wrapT = THREE.RepeatWrapping;
 // Diana del fondo
-const RINGS = [[0.18, 100, '#ffd21f'], [0.42, 50, '#e8262b'], [0.7, 30, '#2a62ff'], [1.0, 20, '#141414']];
+const RINGS = [[0.18, 100, '#f6d77e'], [0.42, 50, '#f4b4c4'], [0.7, 30, '#a9cdf2'], [1.0, 20, '#dfe4ea']];
 const dianaTex = canvasTex((g, w, h) => {
   const c = w / 2;
   for (let i = RINGS.length - 1; i >= 0; i--) {
     const [k, , col] = RINGS[i], inner = i ? RINGS[i - 1][0] : 0;
     g.fillStyle = col; g.beginPath(); g.arc(c, c, k * c, 0, 7); g.fill();
-    g.strokeStyle = 'rgba(255,255,255,0.35)'; g.lineWidth = 2; g.beginPath(); g.arc(c, c, (k + inner) / 2 * c, 0, 7); g.stroke();
-    g.strokeStyle = 'rgba(255,255,255,0.75)'; g.lineWidth = 4; g.beginPath(); g.arc(c, c, k * c - 2, 0, 7); g.stroke();
+    g.strokeStyle = 'rgba(255,255,255,0.6)'; g.lineWidth = 2; g.beginPath(); g.arc(c, c, (k + inner) / 2 * c, 0, 7); g.stroke();
+    g.strokeStyle = 'rgba(255,255,255,0.95)'; g.lineWidth = 4; g.beginPath(); g.arc(c, c, k * c - 2, 0, 7); g.stroke();
   }
-  g.strokeStyle = 'rgba(0,0,0,0.6)'; g.lineWidth = 3; g.beginPath(); g.moveTo(c - 12, c); g.lineTo(c + 12, c); g.moveTo(c, c - 12); g.lineTo(c, c + 12); g.stroke();
+  g.strokeStyle = 'rgba(90,96,106,0.6)'; g.lineWidth = 3; g.beginPath(); g.moveTo(c - 12, c); g.lineTo(c + 12, c); g.moveTo(c, c - 12); g.lineTo(c, c + 12); g.stroke();
 }, 512, 512);
 // Pared interior: azul profundo, más oscura abajo, con líneas que marcan la profundidad
 function insideMat(depth) {
@@ -1366,9 +1390,9 @@ function insideMat(depth) {
     vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
     fragmentShader: `uniform float uD; varying vec2 vUv;
       void main(){
-        vec3 c = mix(vec3(0.02, 0.03, 0.07), vec3(0.14, 0.19, 0.34), pow(vUv.y, 0.8));
+        vec3 c = mix(vec3(0.62, 0.65, 0.70), vec3(0.93, 0.94, 0.96), pow(vUv.y, 0.8));
         float hl = step(0.9, fract(vUv.y * uD / 0.1)), vl = step(0.93, fract(vUv.x * 32.0));
-        c *= 1.0 + 0.45 * max(hl, vl);
+        c *= 1.0 - 0.08 * max(hl, vl);
         gl_FragColor = vec4(c, 1.0); }`,
     side: THREE.BackSide });
 }
@@ -1380,9 +1404,9 @@ function netBasket(R, depth) {
   const net = new THREE.Mesh(new THREE.CylinderGeometry(R * 0.985, rB * 0.985, depth, 64, 1, true),
     new THREE.MeshStandardMaterial({ map: t, alphaTest: 0.35, side: THREE.DoubleSide, roughness: 0.85 }));
   net.position.y = -depth / 2;
-  const diana = new THREE.Mesh(new THREE.CircleGeometry(rB * 0.98, 64).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: dianaTex, color: 0xd8d8d8 }));
+  const diana = new THREE.Mesh(new THREE.CircleGeometry(rB * 0.98, 64).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: dianaTex, color: 0xf2f2f2 }));
   diana.position.y = -depth + 0.004;
-  const under = new THREE.Mesh(new THREE.CircleGeometry(rB, 64).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x1a1d24 }));
+  const under = new THREE.Mesh(new THREE.CircleGeometry(rB, 64).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xdfe3e8 }));
   under.position.y = -depth;
   g.add(wall, net, diana, under);
   return { g, net };
@@ -1390,10 +1414,10 @@ function netBasket(R, depth) {
 function makeHoop(pos, nH) {
   const g = new THREE.Group();
   g.position.copy(pos); g.quaternion.setFromUnitVectors(_hz, nH);
-  const orange = new THREE.MeshStandardMaterial({ color: 0xff6a1a, metalness: 0.55, roughness: 0.35 });
-  g.add(new THREE.Mesh(new THREE.TorusGeometry(HR, 0.014, 12, 72).rotateX(Math.PI / 2), orange));
+  const orange = new THREE.MeshStandardMaterial({ color: 0xf2b8ae, metalness: 0.25, roughness: 0.35 });   // aro coral pastel
+  g.add(new THREE.Mesh(new THREE.TorusGeometry(HR, 0.012, 12, 72).rotateX(Math.PI / 2), orange));
   const { g: nb, net } = netBasket(HR, NET_H); g.add(nb);
-  const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.012, 40).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x2a2f38, roughness: 0.5 }));
+  const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.012, 40).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xf4f5f7, roughness: 0.5 }));
   plate.position.set(0, -0.03, -(HR + 0.055)); g.add(plate);
   const arm = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.025, 0.06), orange); arm.position.set(0, 0, -(HR + 0.025)); g.add(arm);
   scene.add(g); g.updateMatrixWorld(true);
@@ -1428,7 +1452,7 @@ function placeProps(head) {
   }
   cands.sort((a, b) => a.sc - b.sc);
   const chosen = [];
-  for (const c of cands) { if (chosen.length >= 3) break; if (chosen.every(o => o.w.distanceTo(c.w) > 1.5)) chosen.push(c); }
+  for (const c of cands) { if (chosen.length >= 2) break; if (chosen.every(o => o.w.distanceTo(c.w) > 1.5)) chosen.push(c); }
   for (const c of chosen) makeHoop(c.w.clone().addScaledVector(c.nH, HR + 0.06), c.nH);
   if (!chosen.length) {   // sin paredes detectadas: una canasta flotando delante
     const f = new THREE.Vector3(0, 0, -1).applyQuaternion(headQuat); f.y = 0; f.normalize();
@@ -1495,7 +1519,7 @@ function updateProps(dt) {
         if (pts) {
           score += pts;
           const label = pts === 100 ? '¡DIANA! +100' : `¡CANASTA! +${pts}`;
-          floatText(label, new THREE.Vector3(S.P.c.x, S.P.top + 0.3, S.P.c.z), pts === 100 ? 0xffd21f : 0xffb02e, true);
+          floatText(label, new THREE.Vector3(S.P.c.x, S.P.top + 0.3, S.P.c.z), pts === 100 ? 0xf6c94f : 0x8fb8e8, true);
           sndBasket(S.P.c, pts);
         }
         burst(new THREE.Vector3(S.x, S.y, S.z), TYPE_COLORS[S.ball.t], S.r);
@@ -1535,64 +1559,91 @@ const depthClearMat = new THREE.ShaderMaterial({
   fragmentShader: `void main(){ gl_FragColor = vec4(0.); gl_FragDepth = 1.0; }`,
   colorWrite: false, depthWrite: true, depthFunc: THREE.AlwaysDepth, side: THREE.DoubleSide, ...stencilEq });
 
-const glyphTex = canvasTex((g, w, h) => {
-  g.fillStyle = '#000'; g.fillRect(0, 0, w, h); g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.font = 'bold 52px monospace';
-  const s = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワ0123456789Z:・=*+-<>¦|';
-  for (let i = 0; i < 64; i++) { const x = i % 8, y = Math.floor(i / 8); g.fillText(s[i % s.length], x * 64 + 32, y * 64 + 34); }
-}, 512, 512);
-glyphTex.generateMipmaps = false; glyphTex.minFilter = THREE.LinearFilter; glyphTex.colorSpace = THREE.NoColorSpace;
-const matrixU = { uT: { value: 0 }, uG: { value: glyphTex } };
-const RAIN_FS = `
-uniform sampler2D uG; uniform float uT, uCell, uDim; varying vec3 vW; varying vec3 vN;
+// Mundo detrás de los agujeros: un "ordenador cuántico" de fantasía, blanco y luminoso, con pistas de
+// circuito por las que viajan pulsos de luz pastel, chips que respiran y estructuras flotantes.
+const matrixU = { uT: { value: 0 } };
+const CIRCUIT_FS = `
+uniform float uT, uCell, uDim; varying vec3 vW; varying vec3 vN;
 float h1(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float seg(float d, float w){ return 1.0 - smoothstep(w, w * 1.7, d); }
 void main(){
   vec3 n = abs(vN);
   vec2 uv = (n.x > n.y && n.x > n.z) ? vW.zy : ((n.z > n.y) ? vW.xy : vW.xz);
   uv /= uCell;
-  vec2 cell = floor(uv), f = fract(uv);
-  float col = cell.x;
-  float sp = 3.0 + h1(vec2(col, 1.0)) * 7.0, len = 10.0 + h1(vec2(col, 3.0)) * 24.0;
-  float tr = fract((-cell.y - uT * sp + h1(vec2(col, 7.0)) * 200.0) / len);
-  float b = pow(tr, 2.5);
-  float gi = floor(h1(cell + floor(uT * (0.7 + h1(cell) * 3.0))) * 64.0);
-  vec2 guv = (vec2(mod(gi, 8.0), floor(gi / 8.0)) + clamp(vec2(f.x, 1.0 - f.y), 0.06, 0.94)) / 8.0;
-  float g = texture2D(uG, vec2(guv.x, 1.0 - guv.y)).r;
-  vec3 c = vec3(0.12, 1.0, 0.38) * g * b + vec3(0.75, 1.0, 0.8) * g * step(0.965, tr);
-  gl_FragColor = vec4((c + vec3(0.0, 0.035, 0.015)) * uDim, 1.0);
+  vec2 id = floor(uv), f = fract(uv);
+  float rowOn = step(0.35, h1(vec2(7.0, id.y))), hy = 0.2 + 0.6 * h1(vec2(3.0, id.y)), hSeg = step(0.28, h1(id + vec2(0.0, 13.0)));
+  float H = rowOn * hSeg * seg(abs(f.y - hy), 0.03);
+  float colOn = step(0.45, h1(vec2(id.x, 5.0))), vx = 0.2 + 0.6 * h1(vec2(id.x, 9.0)), vSeg = step(0.35, h1(id + vec2(21.0, 0.0)));
+  float Vt = colOn * vSeg * seg(abs(f.x - vx), 0.03);
+  float cross = rowOn * colOn * hSeg * vSeg, dn = length(f - vec2(vx, hy));
+  float node = cross * (1.0 - smoothstep(0.06, 0.085, dn)), ring = cross * seg(abs(dn - 0.13), 0.015);
+  float chipOn = step(0.93, h1(id + vec2(31.0, 17.0)));
+  vec2 q = abs(f - 0.5); float m = max(q.x, q.y);
+  float chip = chipOn * (1.0 - smoothstep(0.26, 0.28, m));
+  float pins = chipOn * step(0.29, m) * step(m, 0.37) * step(0.5, fract((q.x > q.y ? f.y : f.x) * 8.0));
+  float line = max(max(H, Vt), max(ring, pins));
+  float ph = fract(uv.x * 0.12 - uT * (0.25 + 0.35 * h1(vec2(1.0, id.y))) + h1(vec2(2.0, id.y)));
+  float pv = fract(uv.y * 0.12 - uT * (0.25 + 0.35 * h1(vec2(id.x, 4.0))) + h1(vec2(id.x, 6.0)));
+  float pulse = H * smoothstep(0.9, 1.0, ph) + Vt * smoothstep(0.9, 1.0, pv);
+  vec3 c = vec3(0.955, 0.962, 0.972);
+  c = mix(c, vec3(0.75, 0.80, 0.87), line * 0.9);
+  c = mix(c, vec3(0.88, 0.90, 0.93), chip);
+  c = mix(c, vec3(0.80, 0.73, 0.98), chip * (0.5 + 0.5 * sin(uT * 2.0 + h1(id) * 6.28)) * 0.4);
+  c = mix(c, vec3(0.68, 0.74, 0.83), node);
+  c = mix(c, vec3(0.55, 0.82, 1.0), clamp(pulse, 0.0, 1.0));
+  gl_FragColor = vec4(c * uDim, 1.0);
 }`;
-function rainMat(cell, dim) {
+function circuitMat(cell, dim = 1) {
   return new THREE.ShaderMaterial({ uniforms: { ...matrixU, uCell: { value: cell }, uDim: { value: dim } },
     vertexShader: `varying vec3 vW; varying vec3 vN; void main(){ vec4 w = modelMatrix*vec4(position,1.); vW = w.xyz; vN = normalize(mat3(modelMatrix)*normal); gl_Position = projectionMatrix*viewMatrix*w; }`,
-    fragmentShader: RAIN_FS, side: THREE.DoubleSide, ...stencilEq });
+    fragmentShader: CIRCUIT_FS, side: THREE.DoubleSide, ...stencilEq });
 }
 let matrixPts = null;
+const matrixObjs = [], quantumSpin = [];
+function addQ(o, order) { o.renderOrder = order; scene.add(o); matrixObjs.push(o); return o; }
+// "lámpara" de ordenador cuántico: discos plateados apilados, varillas, bobinas pastel y cúbits que brillan
+function quantumTower(x, z, scale) {
+  const g = new THREE.Group(), silver = new THREE.MeshStandardMaterial({ color: 0xf1f3f6, metalness: 0.6, roughness: 0.25, ...stencilEq });
+  const coil = new THREE.MeshStandardMaterial({ color: 0xd8cdf6, emissive: 0xc9b8f5, emissiveIntensity: 0.5, roughness: 0.4, ...stencilEq });
+  const qubit = new THREE.MeshStandardMaterial({ color: 0xcfe9ff, emissive: 0x9fd3f5, emissiveIntensity: 1.1, ...stencilEq });
+  let y = 0; const radii = [0.75, 0.62, 0.5, 0.4, 0.3];
+  radii.forEach((r, i) => {
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.06, 48), silver); disc.position.y = y; g.add(disc);
+    for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2, rod = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.42, 8), silver); rod.position.set(Math.cos(a) * r * 0.75, y - 0.24, Math.sin(a) * r * 0.75); g.add(rod); }
+    const c = new THREE.Mesh(new THREE.TorusGeometry(r * 0.55, 0.018, 8, 40).rotateX(Math.PI / 2), coil); c.position.y = y - 0.2; g.add(c);
+    y -= 0.48;
+  });
+  for (let k = 0; k < 4; k++) { const s = new THREE.Mesh(new THREE.SphereGeometry(0.05, 16, 12), qubit); s.position.set((k - 1.5) * 0.08, y + 0.1, 0); g.add(s); }
+  g.position.set(x, floorY + 0.5 + (radii.length * 0.48) * scale + 0.5, z); g.scale.setScalar(scale);
+  quantumSpin.push({ g, w: rnd(0.08, 0.2) * (Math.random() < 0.5 ? -1 : 1) });
+  return addQ(g, -0.39);
+}
 function buildMatrix() {
   const c = roomValid ? roomMin.clone().add(roomMax).multiplyScalar(0.5) : headPos.clone(); c.y = floorY;
-  const box = new THREE.Mesh(new THREE.BoxGeometry(44, 24, 44), rainMat(0.45, 0.55)); box.position.set(c.x, floorY + 6, c.z); box.renderOrder = -0.4; scene.add(box);
+  addQ(new THREE.Mesh(new THREE.BoxGeometry(44, 24, 44), circuitMat(0.4, 0.97)), -0.4).position.set(c.x, floorY + 6, c.z);
+  addQ(new THREE.Mesh(new THREE.PlaneGeometry(80, 80).rotateX(-Math.PI / 2), circuitMat(0.22, 1.0)), -0.395).position.set(c.x, floorY + 0.002, c.z);
   const half = roomValid ? Math.max(roomMax.x - roomMin.x, roomMax.z - roomMin.z) / 2 : 3;
-  for (let i = 0; i < 46; i++) {   // columnas de código en profundidad (paralaje)
-    const a = rnd(0, Math.PI * 2), d = half + rnd(1.5, 14), s = rnd(0.3, 1.3), hgt = rnd(2.5, 9);
-    const m = new THREE.Mesh(new THREE.BoxGeometry(s, hgt, s), rainMat(rnd(0.09, 0.16), rnd(0.7, 1.1)));
-    m.position.set(c.x + Math.cos(a) * d, floorY + hgt / 2, c.z + Math.sin(a) * d); m.renderOrder = -0.39; scene.add(m);
+  for (let i = 0; i < 26; i++) {   // columnas de circuito en profundidad (paralaje)
+    const a = rnd(0, Math.PI * 2), d = half + rnd(1.5, 14), s = rnd(0.25, 0.9), hgt = rnd(2.5, 8);
+    addQ(new THREE.Mesh(new THREE.BoxGeometry(s, hgt, s), circuitMat(rnd(0.07, 0.12))), -0.39).position.set(c.x + Math.cos(a) * d, floorY + hgt / 2, c.z + Math.sin(a) * d);
   }
-  const grid = new THREE.Mesh(new THREE.PlaneGeometry(80, 80).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({
-    vertexShader: `varying vec3 vW; void main(){ vec4 w = modelMatrix*vec4(position,1.); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }`,
-    fragmentShader: `varying vec3 vW; uniform float uT; void main(){ vec2 g = abs(fract(vW.xz) - 0.5); float l = smoothstep(0.47, 0.5, max(g.x, g.y));
-      float pulse = 0.5 + 0.5 * sin(length(vW.xz) * 1.5 - uT * 3.0); gl_FragColor = vec4(vec3(0.1, 1.0, 0.4) * l * (0.35 + 0.65 * pulse), 1.0); }`,
-    uniforms: { uT: matrixU.uT }, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, ...stencilEq }));
-  grid.position.set(c.x, floorY + 0.002, c.z); grid.renderOrder = -0.38; scene.add(grid);
-  const N = 900, pos = new Float32Array(N * 3);
+  for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2 + rnd(-0.2, 0.2), d = half + rnd(1.2, 7); quantumTower(c.x + Math.cos(a) * d, c.z + Math.sin(a) * d, rnd(0.6, 1.2)); }
+  const N = 700, pos = new Float32Array(N * 3);
   for (let i = 0; i < N; i++) { const a = rnd(0, Math.PI * 2), d = half + rnd(0.3, 10); pos.set([c.x + Math.cos(a) * d, floorY + rnd(0, 6), c.z + Math.sin(a) * d], i * 3); }
   const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  matrixPts = new THREE.Points(pg, new THREE.PointsMaterial({ color: 0x5bff9a, size: 0.035, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, ...stencilEq }));
-  matrixPts.renderOrder = -0.37; scene.add(matrixPts);
+  matrixPts = addQ(new THREE.Points(pg, new THREE.PointsMaterial({ color: 0x9fd3f5, size: 0.03, transparent: true, opacity: 0.8, depthWrite: false, ...stencilEq })), -0.37);
+}
+function clearMatrix() {
+  for (const o of matrixObjs) scene.remove(o);
+  matrixObjs.length = 0; quantumSpin.length = 0; matrixPts = null;
 }
 function updateMatrix(dt) {
   matrixU.uT.value = now;
-  if (holes.length && matrixPts) {
+  if (!holes.length) return;
+  for (const q of quantumSpin) q.g.rotation.y += q.w * dt;
+  if (matrixPts) {   // chispas que suben despacio
     const a = matrixPts.geometry.attributes.position.array;
-    for (let i = 1; i < a.length; i += 3) { a[i] -= dt * (1.2 + (i % 7) * 0.35); if (a[i] < floorY) a[i] += 6; }
+    for (let i = 1; i < a.length; i += 3) { a[i] += dt * (0.15 + (i % 5) * 0.05); if (a[i] > floorY + 6) a[i] -= 6; }
     matrixPts.geometry.attributes.position.needsUpdate = true;
   }
 }
@@ -1622,7 +1673,7 @@ function makeHole(P, pw, R) {
   const dc = new THREE.Mesh(geo, depthClearMat); dc.renderOrder = -0.5;
   // borde roto: verde digital por dentro, oscuro por fuera
   const rp = [], rc = [], ri = [];
-  ring.forEach(([x, z]) => { const k = rnd(1.1, 1.25); rp.push(x, 0.001, z, x * k, 0.001, z * k); rc.push(0.25, 1, 0.45, 0.12, 0.12, 0.12); });
+  ring.forEach(([x, z]) => { const k = rnd(1.1, 1.25); rp.push(x, 0.001, z, x * k, 0.001, z * k); rc.push(0.62, 0.86, 1.0, 0.72, 0.74, 0.78); });
   for (let i = 0; i < N; i++) { const a = i * 2, b = ((i + 1) % N) * 2; ri.push(a, a + 1, b + 1, a, b + 1, b); }
   const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(rp, 3)); rg.setAttribute('color', new THREE.Float32BufferAttribute(rc, 3)); rg.setIndex(ri);
   const rim = new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.92, side: THREE.DoubleSide, depthWrite: false }));
@@ -1635,7 +1686,7 @@ function makeHole(P, pw, R) {
     while (rr < end) { rr += R * rnd(0.15, 0.35); a += rnd(-0.25, 0.25); const nx = Math.cos(a) * rr, nz = Math.sin(a) * rr; cp.push(x, 0.002, z, nx, 0.002, nz); x = nx; z = nz; }
   }
   const cg = new THREE.BufferGeometry(); cg.setAttribute('position', new THREE.Float32BufferAttribute(cp, 3));
-  const cracks = new THREE.LineSegments(cg, new THREE.LineBasicMaterial({ color: 0x161616, transparent: true, opacity: 0.8 }));
+  const cracks = new THREE.LineSegments(cg, new THREE.LineBasicMaterial({ color: 0x8a9099, transparent: true, opacity: 0.7 }));
   cracks.renderOrder = 2;
   grp.add(mask, dc, rim, cracks); scene.add(grp);
   const c = new THREE.Vector3().setFromMatrixPosition(grp.matrix);
@@ -1645,8 +1696,8 @@ function makeHole(P, pw, R) {
   for (const H of Object.values(hands)) pulse(H, 1, 120);
 }
 const chunkGeo = new THREE.IcosahedronGeometry(1, 0), cubeGeo = new THREE.BoxGeometry(1, 1, 1);
-const plasterMat = new THREE.MeshStandardMaterial({ color: 0xd9d5cc, roughness: 0.95, flatShading: true });
-const digiMat = new THREE.MeshStandardMaterial({ color: 0x063, emissive: 0x22ff66, emissiveIntensity: 1.3, flatShading: true });
+const plasterMat = new THREE.MeshStandardMaterial({ color: 0xeceae6, roughness: 0.95, flatShading: true });
+const digiMat = new THREE.MeshStandardMaterial({ color: 0xdff0ff, emissive: 0x9fd3f5, emissiveIntensity: 0.6, flatShading: true });
 function spawnDebris(c, n, R) {
   const N = Math.min(70, 16 + Math.floor(R * 120));
   const t1 = new THREE.Vector3().crossVectors(n, Math.abs(n.y) < 0.9 ? _Y : _hz).normalize(), t2 = new THREE.Vector3().crossVectors(n, t1);
@@ -1710,6 +1761,136 @@ function racketVsWalls(dt) {
   }
 }
 
+// ---------- Menú en la palma izquierda ----------
+// Al mirar la palma abierta de la mano izquierda aparece un menú; se pulsa tocándolo con el índice
+// derecho (o con el mando derecho). RESET: nueva partida · SCAN: volver a escanear · MUTE: música.
+const MENU_W = 0.2, MENU_H = 0.1;
+const MENU_BTNS = [
+  { id: 'reset', label: 'RESET', x: -0.064, color: '#f7d3dc' },
+  { id: 'scan',  label: 'SCAN',  x: 0,      color: '#d3e6f8' },
+  { id: 'mute',  label: 'MUTE',  x: 0.064,  color: '#d5f0e4' },
+];
+const BTN_W = 0.056, BTN_H = 0.056, BTN_Y = -0.012;
+const menu = makePanel(MENU_W, MENU_H);
+menu.c.width = 800; menu.c.height = 400; menu.mesh.renderOrder = 25;
+menu.mesh.material.depthTest = false;
+let menuShowT = 0, menuHideT = 0, menuHover = -1, menuPressed = -1, menuFlash = { i: -1, t: 0 }, menuKey = '';
+function menuIcon(g, id, cx, cy, s, on) {
+  g.strokeStyle = '#3a3f47'; g.fillStyle = '#3a3f47'; g.lineWidth = s * 0.12; g.lineCap = 'round';
+  if (id === 'reset') {
+    const a0 = Math.PI * 0.15, a1 = Math.PI * 1.75, R = s * 0.4;                // flecha circular
+    g.beginPath(); g.arc(cx, cy, R, a0, a1); g.stroke();
+    const x = cx + Math.cos(a1) * R, y = cy + Math.sin(a1) * R, tx = -Math.sin(a1), ty = Math.cos(a1), nx = Math.cos(a1), ny = Math.sin(a1);
+    g.beginPath(); g.moveTo(x + tx * s * 0.22, y + ty * s * 0.22); g.lineTo(x + nx * s * 0.17, y + ny * s * 0.17); g.lineTo(x - nx * s * 0.17, y - ny * s * 0.17); g.closePath(); g.fill();
+  } else if (id === 'scan') {
+    for (const r of [0.16, 0.32, 0.48]) { g.beginPath(); g.arc(cx, cy, s * r, Math.PI * 1.1, Math.PI * 1.9); g.stroke(); }
+    g.beginPath(); g.arc(cx, cy, s * 0.07, 0, 7); g.fill();
+    g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + s * 0.34, cy - s * 0.34); g.stroke();
+  } else {
+    g.beginPath(); g.ellipse(cx - s * 0.16, cy + s * 0.26, s * 0.16, s * 0.12, -0.4, 0, 7); g.fill();
+    g.beginPath(); g.moveTo(cx - s * 0.02, cy + s * 0.24); g.lineTo(cx - s * 0.02, cy - s * 0.36); g.lineTo(cx + s * 0.3, cy - s * 0.24); g.stroke();
+    if (!on) { g.strokeStyle = '#e07a8f'; g.lineWidth = s * 0.13; g.beginPath(); g.moveTo(cx - s * 0.42, cy - s * 0.42); g.lineTo(cx + s * 0.42, cy + s * 0.42); g.stroke(); }
+  }
+}
+function drawMenu() {
+  const key = [menuHover, menuPressed, menuFlash.i, musicOn, score, balls.length].join('|'); if (key === menuKey) return; menuKey = key;
+  const { g, c } = menu, W = c.width, H = c.height, px = x => (x / MENU_W + 0.5) * W, py = y => (0.5 - y / MENU_H) * H, k = W / MENU_W;
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = 'rgba(255,255,255,0.86)'; g.beginPath(); g.roundRect(2, 2, W - 4, H - 4, H * 0.16); g.fill();
+  g.strokeStyle = 'rgba(0,0,0,0.07)'; g.lineWidth = 2; g.stroke();
+  g.fillStyle = 'rgba(0,0,0,0.55)'; g.font = `500 ${H * 0.085}px ${PANEL_FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(`${score} puntos  ·  ${balls.length} bolas`, W / 2, H * 0.12);
+  MENU_BTNS.forEach((b, i) => {
+    const x0 = px(b.x - BTN_W / 2), y0 = py(BTN_Y + BTN_H / 2), bw = BTN_W * k, bh = BTN_H * k;
+    const active = b.id === 'mute' && !musicOn, hot = menuHover === i, down = menuPressed === i || menuFlash.i === i;
+    g.save(); if (down) { g.translate(x0 + bw / 2, y0 + bh / 2); g.scale(0.94, 0.94); g.translate(-x0 - bw / 2, -y0 - bh / 2); }
+    g.fillStyle = active ? '#f4b4c4' : b.color; g.beginPath(); g.roundRect(x0, y0, bw, bh, bh * 0.22); g.fill();
+    if (hot || down) { g.strokeStyle = 'rgba(40,45,52,0.55)'; g.lineWidth = 5; g.stroke(); }
+    menuIcon(g, b.id, x0 + bw / 2, y0 + bh * 0.4, bh * 0.42, musicOn);
+    g.fillStyle = '#3a3f47'; g.font = `650 ${bh * 0.17}px ${PANEL_FONT}`; g.fillText(b.label, x0 + bw / 2, y0 + bh * 0.82);
+    g.restore();
+  });
+  menu.tex.needsUpdate = true;
+}
+const _mt = new THREE.Vector3(), _mh = new THREE.Vector3();
+function updateMenu(dt) {
+  const L = hands.left, R = hands.right;
+  let want = false;
+  if (L && L.ok && L.n && !L.ball && !L.raw && rk.holder !== L && gun.holder !== L) {
+    _mh.subVectors(headPos, L.palm).normalize();
+    want = L.n.dot(_mh) > 0.6;                       // palma mirando a la cara
+  }
+  if (want) { menuShowT += dt; menuHideT = 0; } else { menuHideT += dt; menuShowT = 0; }
+  if (!menu.mesh.visible && menuShowT > 0.25) {
+    menu.mesh.visible = true; menu.mesh.userData.placed = false; if (actx) tone(master, 1320, 'sine', 0.05, actx.currentTime, 0.08);
+  }
+  if (menu.mesh.visible && menuHideT > 0.4) { menu.mesh.visible = false; menuHover = menuPressed = -1; }
+  if (!menu.mesh.visible) return;
+  // sobre la palma, mirando a la cabeza
+  if (L && L.ok && L.n) {
+    _mt.copy(L.palm).addScaledVector(L.n, 0.09).add(new THREE.Vector3(0, 0.03, 0));
+    menu.mesh.position.lerp(_mt, menu.mesh.userData.placed ? Math.min(1, dt * 14) : 1); menu.mesh.userData.placed = true;
+    menu.mesh.lookAt(headPos);
+  }
+  menu.mesh.updateMatrixWorld();
+  // pulsar con el índice derecho
+  menuHover = -1;
+  if (R && R.ok && R.tip) {
+    const lp = menu.mesh.worldToLocal(_mt.copy(R.tip));
+    MENU_BTNS.forEach((b, i) => {
+      if (Math.abs(lp.x - b.x) < BTN_W / 2 && Math.abs(lp.y - BTN_Y) < BTN_H / 2 && lp.z < 0.04 && lp.z > -0.04) menuHover = i;
+    });
+    if (menuHover >= 0 && lp.z < 0.012 && menuPressed < 0 && now - menuFlash.t > 0.5) {
+      menuPressed = menuHover; menuFlash = { i: menuHover, t: now };
+      if (actx) tone(master, 880, 'sine', 0.12, actx.currentTime, 0.07, 1300); pulse(R, 0.5, 30);
+      menuAction(MENU_BTNS[menuHover].id);
+    }
+    if (menuPressed >= 0 && (menuHover !== menuPressed || lp.z > 0.025)) menuPressed = -1;
+  }
+  if (menuFlash.i >= 0 && now - menuFlash.t > 0.25) menuFlash.i = -1;
+  drawMenu();
+}
+function menuAction(id) {
+  if (id === 'mute') setMusic(!musicOn);
+  else if (id === 'reset') resetGame(true);
+  else if (id === 'scan') rescan();
+}
+// Vacía la partida: bolas, agujeros, trozos, raqueta y pistola
+function clearGame() {
+  for (const b of [...balls]) { if (b.held) b.held.ball = null; removeBall(b); }
+  for (const d of drops) if (d.ring) { scene.remove(d.ring); d.ring.material.dispose(); }
+  drops.length = 0;
+  for (const S of swallowed) scene.remove(S.m); swallowed.length = 0;
+  for (const d of debris) scene.remove(d.m); debris.length = 0;
+  for (const h of holes) scene.remove(h.grp); holes.length = 0; holeQ.length = 0; goalQ.length = 0; mergeQ.length = 0;
+  for (const b of bursts) scene.remove(b.pts); bursts.length = 0;
+  rk.holder = null; gun.holder = null; score = 0;
+}
+function resetGame(rain) {
+  clearGame();
+  if (rain) {
+    for (let i = 0; i < INITIAL_BALLS; i++) queueDrop(now + 0.6 + i * 0.09, i % TYPES.length);
+    nextDrop = now + 0.6 + INITIAL_BALLS * 0.09 + rnd(DROP_MIN, DROP_MAX);
+    showInfo(['Nueva partida', '¡Llueven pelotas!'], 3);
+  }
+}
+// Vuelve a escanear la habitación: borra la geometría conocida, canastas y mundo cuántico, y repite el escaneo
+function rescan() {
+  clearGame(); nextDrop = Infinity;
+  for (const H of hoops) scene.remove(H.g); hoops.length = 0;
+  for (const B of bins) scene.remove(B.g); bins.length = 0;
+  clearMatrix();
+  setOcclusion(false);
+  for (const d of planes.values()) scene.remove(d.vis, d.occ); planes.clear();
+  for (const d of meshes.values()) scene.remove(d.wire, d.occ); meshes.clear();
+  virtualPlanes = []; virtualRoom = false; colPlanes = []; worldDirty = true;
+  scanVisible = true; scanFade = 1; scanUniforms.uA.value = 1;
+  state = 'scan'; scanT0 = -1; foundAt = 0; roomCaptureTried = true;
+  menu.mesh.visible = false;
+  const s = renderer.xr.getSession();
+  if (s && s.initiateRoomCapture) s.initiateRoomCapture().catch(e => console.warn('[bolas] initiateRoomCapture', e));
+}
+
 // ---------- Bucle principal ----------
 let state = 'intro', scanT0 = -1, foundAt = 0, roomCaptureTried = false, scanVisible = true, scanFade = 1, lastT = 0, worldTimer = 0;
 const headPos = V(), headQuat = new THREE.Quaternion();
@@ -1752,17 +1933,18 @@ function loop(t, frame) {
     updateHands(frame, ref, dt);
     updateRacket(dt);
     updateGun(dt);
+    updateMenu(dt);
     racketVsWalls(dt);
     updateHeld(dt);
     physics(dt);
     processGoals();
     processHoles();
     for (const b of [...balls]) if (b.inMatrix && now - b.inMatrix > 2.5) {   // absorbida por Matrix
-      score += 5; burst(b.pos, 0x3bff7a, b.r); removeBall(b);
+      score += 5; burst(b.pos, 0xbfe3ff, b.r); removeBall(b);
     }
     updateProps(dt); updateDebris(dt); updateMatrix(dt);
     const L = hands.left;   // panel de muñeca
-    if (L && L.ok && L.wrist && rk.holder !== L) {
+    if (L && L.ok && L.wrist && rk.holder !== L && !menu.mesh.visible) {
       wrist.mesh.visible = true; drawPanel(wrist, [`${score}`, `${balls.length} bolas`]);
       wrist.mesh.position.copy(L.wrist).add(new THREE.Vector3(0, 0.07, 0)); wrist.mesh.lookAt(headPos);
     } else wrist.mesh.visible = false;
@@ -1810,6 +1992,7 @@ async function startAR(auto) {
     await renderer.xr.setSession(session);
     document.getElementById('intro').style.display = 'none';
     state = 'scan'; scanT0 = -1; foundAt = 0; lastT = 0;
+    startMusic();
     xrLog.push((auto ? 'auto' : 'botón') + ': sesión iniciada');
     session.addEventListener('end', () => { if (IS_APP) sessionStorage.setItem('bolas-fin', '1'); location.reload(); });
     // el audio puede quedar suspendido sin gesto: se reanuda con la primera interacción
@@ -1830,7 +2013,7 @@ async function check() {
   else if (!ok) msg.textContent = 'Este navegador no parece admitir realidad mixta; puedes intentarlo igualmente.';
 }
 btn.addEventListener('click', () => startAR(false));
-window.__bolas = { gun, ceilingAt, xrLog, hands, balls, rk, gest, lastThrows, hoops, bins, holes, debris, get score() { return score; }, get state() { return state; },
+window.__bolas = { menu, gun, ceilingAt, xrLog, hands, balls, rk, gest, lastThrows, hoops, bins, holes, debris, get score() { return score; }, get state() { return state; },
   get floorY() { return floorY; }, get ceilY() { return ceilY; }, get room() { return roomValid ? [roomMin.toArray(), roomMax.toArray()] : null; } };
 renderer.setAnimationLoop(loop);
 check();

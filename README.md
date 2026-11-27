@@ -5,6 +5,9 @@ se cogen con la pinza o el puño, se lanzan a canastas con diana, rompen las par
 y dos pelotas iguales se fusionan. Juntar los puños y separarlos saca o guarda una raqueta.
 El gesto V (victoria) saca o guarda una pistola de juguete que dispara pelotas al doblar el índice (mandos: A/X y gatillo).
 Las pelotas caen desde encima del techo: el techo es permeable desde arriba y sólido desde abajo.
+Al mirar la palma abierta de la mano izquierda aparece un menú (se pulsa con el índice derecho): RESET (nueva partida),
+SCAN (volver a escanear la habitación) y MUTE (música ambiental). Estética clara: blancos, grises y pastel; detrás de las
+paredes rotas hay un ordenador cuántico de fantasía, blanco, con circuitos y pulsos de luz.
 
 - Jugar en el navegador de la Quest: https://smussull.github.io/bolas-ra/
 - Funciona sin internet después de abrirlo una vez (service worker `sw.js`).
