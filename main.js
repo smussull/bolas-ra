@@ -60,47 +60,99 @@ function canvasTex(draw, w = 512, h = 256) {
 }
 const rnd = (a, b) => a + Math.random() * (b - a);
 
-// Paleta "grafito y cobre": sobria y elegante. Cada tipo tiene su material y un dibujo sutil para ver el giro.
-const texGrafito = canvasTex((g, w, h) => {
-  g.fillStyle = '#2b2d31'; g.fillRect(0, 0, w, h); g.strokeStyle = '#3d4046'; g.lineWidth = 6;
-  for (let y = h / 8; y < h; y += h / 4) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
-});
-const texCeramica = canvasTex((g, w, h) => {
-  g.fillStyle = '#ece9e4'; g.fillRect(0, 0, w, h);
-  g.fillStyle = '#d3cec6'; g.fillRect(0, h * 0.47, w, h * 0.06);
-});
-const texCobre = canvasTex((g, w, h) => {
-  g.fillStyle = '#b87333'; g.fillRect(0, 0, w, h);
-  for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(${Math.random() < .5 ? '255,220,180' : '90,45,15'},${rnd(.04, .12)})`; g.fillRect(rnd(0, w), rnd(0, h), rnd(30, 120), 1); }
-  g.fillStyle = 'rgba(70,35,10,.35)'; g.fillRect(0, h * 0.49, w, 3);
-});
-const texAcero = canvasTex((g, w, h) => {
-  g.fillStyle = '#8a8f96'; g.fillRect(0, 0, w, h);
-  for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(${Math.random() < .5 ? '255,255,255' : '40,45,50'},${rnd(.04, .1)})`; g.fillRect(rnd(0, w), rnd(0, h), rnd(30, 120), 1); }
-  g.strokeStyle = 'rgba(40,45,50,.45)'; g.lineWidth = 3;
-  for (const x of [w * 0.25, w * 0.75]) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
-});
-const texPizarra = canvasTex((g, w, h) => {
-  g.fillStyle = '#5b6670'; g.fillRect(0, 0, w, h); g.fillStyle = '#6d7882';
-  for (let i = 0; i < 8; i++) for (let j = 0; j < 4; j++) { g.beginPath(); g.arc((i + (j % 2) * 0.5) * w / 8, (j + 0.5) * h / 4, 9, 0, 7); g.fill(); }
-});
-const texArena = canvasTex((g, w, h) => {
-  g.fillStyle = '#c9b79c'; g.fillRect(0, 0, w, h);
-  g.strokeStyle = '#e0d4c0'; g.lineWidth = 7; g.beginPath();
-  for (let x = 0; x <= w; x += 4) { const y = h / 2 + Math.sin(x / w * Math.PI * 4) * h * 0.26; x ? g.lineTo(x, y) : g.moveTo(x, y); }
-  g.stroke();
-});
+// ---------- Paletas de color ----------
+// Cuatro paletas elegibles en el menú de la palma. Todo lo que se puede recolorear lee de aquí.
+const rgb = h => [((h >> 16) & 255) / 255, ((h >> 8) & 255) / 255, (h & 255) / 255];
+const PALETTES = {
+  grafito: { name: 'Grafito y cobre', swatch: ['#2b2d31', '#b87333', '#ece9e4'],
+    balls: [{ k: 'lines', base: '#2b2d31', pat: '#3d4046', rough: 0.7 }, { k: 'band', base: '#ece9e4', pat: '#d3cec6', rough: 0.25, clear: 0.8 },
+      { k: 'brushed', base: '#b87333', pat: '#5a2d0f', metal: 0.85, rough: 0.32 }, { k: 'rings', base: '#8a8f96', pat: '#282d32', metal: 0.8, rough: 0.35 },
+      { k: 'dots', base: '#5b6670', pat: '#6d7882', rough: 0.75 }, { k: 'seam', base: '#c9b79c', pat: '#e0d4c0', rough: 0.8 }],
+    fx: [0x6a6e75, 0xf3f0ea, 0xd08a4a, 0xb4b9c0, 0x8794a0, 0xddcdb3],
+    rim: { c: 0xb87333, metal: 0.85, rough: 0.3 }, plate: { c: 0x2b2d31, rough: 0.55 },
+    net: { o: 'rgba(20,21,24,0.85)', m: '#4a4d53', h: 'rgba(110,114,121,0.9)', k: '#5c6067' }, inside: [0x0f1013, 0x3d4047, 0.35],
+    rings: ['#b87333', '#ece9e4', '#5b6670', '#2b2d31'],
+    gun: { body: { c: 0x2b2d31, rough: 0.55 }, barrel: { c: 0x8a8f96, metal: 0.8, rough: 0.35 }, detail: { c: 0xb87333, metal: 0.85, rough: 0.3 }, dark: { c: 0x1f2124, rough: 0.7 } },
+    racket: { frame: { c: 0xb87333, metal: 0.85, rough: 0.3 }, handle: { c: 0x2b2d31, rough: 0.7 }, strings: 0xece9e4 },
+    q: { bg: 0xece8e4, trace: 0x5c616b, chip: 0xccc7bd, glow: 0xb87333, node: 0x3d4047, pulse: 0xd98538 },
+    tower: { metal: { c: 0xb87333, metal: 0.85, rough: 0.28 }, coil: { c: 0x2b2d31, rough: 0.5 }, qubit: { c: 0xf3efe8, e: 0xe0b48c, ei: 0.5 } },
+    pts: 0xc58a52, holeIn: 0xd1854a, holeOut: 0x2b2b30, crack: 0x2b2d31, digi: { c: 0xb87333, metal: 0.85, rough: 0.3 },
+    accent: 0xd08a4a, accent2: 0xe0a060, menuBtn: ['#ece9e4', '#e2ddd5', '#ece9e4'], menuActive: '#dba878', how: ['#b87333', '#8a8f96'] },
+  mono: { name: 'Monocromo', swatch: ['#1c1c1c', '#ff5a3c', '#f4f4f2'],
+    balls: [{ k: 'band', base: '#f4f4f2', pat: '#dcdcda', rough: 0.25, clear: 0.8 }, { k: 'lines', base: '#a9a9a6', pat: '#939390', rough: 0.6 },
+      { k: 'dots', base: '#6f6f6c', pat: '#868683', rough: 0.6 }, { k: 'rings', base: '#3c3c3a', pat: '#252523', rough: 0.5 },
+      { k: 'lines', base: '#1c1c1c', pat: '#2e2e2e', rough: 0.2, clear: 1 }, { k: 'seam', base: '#ff5a3c', pat: '#ffd0c4', rough: 0.45 }],
+    fx: [0xffffff, 0xe0e0de, 0xb0b0ad, 0x7a7a78, 0x5a5a58, 0xff7a60],
+    rim: { c: 0xff5a3c, rough: 0.4 }, plate: { c: 0x1c1c1c, rough: 0.5 },
+    net: { o: 'rgba(0,0,0,0.55)', m: '#f4f4f2', h: 'rgba(200,200,198,0.9)', k: '#e2e2e0' }, inside: [0x0d0d0d, 0x333333, 0.3],
+    rings: ['#ff5a3c', '#f4f4f2', '#8c8c89', '#1c1c1c'],
+    gun: { body: { c: 0x1c1c1c, rough: 0.35 }, barrel: { c: 0xf4f4f2, rough: 0.4 }, detail: { c: 0xff5a3c, rough: 0.4 }, dark: { c: 0x4a4a48, rough: 0.6 } },
+    racket: { frame: { c: 0x1c1c1c, rough: 0.35 }, handle: { c: 0xff5a3c, rough: 0.5 }, strings: 0xf4f4f2 },
+    q: { bg: 0xf2f2f2, trace: 0x404040, chip: 0xd8d8d8, glow: 0xff5a3c, node: 0x1a1a1a, pulse: 0xff5a3c },
+    tower: { metal: { c: 0xd9d9d9, metal: 0.7, rough: 0.3 }, coil: { c: 0x1c1c1c, rough: 0.5 }, qubit: { c: 0xffffff, e: 0xff5a3c, ei: 0.4 } },
+    pts: 0xff7a60, holeIn: 0xff5c3d, holeOut: 0x1e1e1e, crack: 0x1c1c1c, digi: { c: 0xff5a3c, rough: 0.4 },
+    accent: 0xff5a3c, accent2: 0xff8a70, menuBtn: ['#f4f4f2', '#e6e6e4', '#f4f4f2'], menuActive: '#ff8a70', how: ['#ff5a3c', '#4a4a48'] },
+  joyas: { name: 'Joyas', swatch: ['#1f6f5c', '#c9a227', '#5b3f8c'],
+    balls: [{ k: 'rings', base: '#1f6f5c', pat: '#2a8a73', rough: 0.2, clear: 1 }, { k: 'band', base: '#24477a', pat: '#3360a0', rough: 0.2, clear: 1 },
+      { k: 'dots', base: '#8c2f39', pat: '#a8414c', rough: 0.2, clear: 1 }, { k: 'brushed', base: '#c9a227', pat: '#6b520e', metal: 0.9, rough: 0.3 },
+      { k: 'lines', base: '#5b3f8c', pat: '#7556ab', rough: 0.2, clear: 1 }, { k: 'seam', base: '#1e1e22', pat: '#3a3a42', rough: 0.15, clear: 1 }],
+    fx: [0x3fae92, 0x4f7fc4, 0xc4505e, 0xe8c45a, 0x8a6cc4, 0x707078],
+    rim: { c: 0xc9a227, metal: 0.9, rough: 0.25 }, plate: { c: 0x1e1e22, rough: 0.4 },
+    net: { o: 'rgba(8,8,10,0.9)', m: '#2a2a30', h: 'rgba(90,90,100,0.9)', k: '#c9a227' }, inside: [0x0a0d17, 0x242a44, 0.4],
+    rings: ['#c9a227', '#8c2f39', '#24477a', '#1e1e22'],
+    gun: { body: { c: 0x24477a, rough: 0.3 }, barrel: { c: 0xc9a227, metal: 0.9, rough: 0.3 }, detail: { c: 0xc9a227, metal: 0.9, rough: 0.3 }, dark: { c: 0x1e1e22, rough: 0.5 } },
+    racket: { frame: { c: 0xc9a227, metal: 0.9, rough: 0.25 }, handle: { c: 0x1e1e22, rough: 0.5 }, strings: 0xf3efe8 },
+    q: { bg: 0x10131f, trace: 0x9e8034, chip: 0x232838, glow: 0x7556ab, node: 0xc9a227, pulse: 0xffd866 },
+    tower: { metal: { c: 0xc9a227, metal: 0.9, rough: 0.25 }, coil: { c: 0x24477a, rough: 0.4 }, qubit: { c: 0xe8e0ff, e: 0x8a6cc4, ei: 0.8 } },
+    pts: 0xe8c45a, holeIn: 0xe6bf4d, holeOut: 0x1a1a21, crack: 0x1e1e22, digi: { c: 0xc9a227, metal: 0.9, rough: 0.3 },
+    accent: 0xe8c45a, accent2: 0xffd866, menuBtn: ['#efe9dc', '#e6e0d2', '#efe9dc'], menuActive: '#e3c46a', how: ['#8c2f39', '#c9a227'] },
+  nordico: { name: 'Nórdico', swatch: ['#c8a27a', '#8a9a7b', '#b5654a'],
+    balls: [{ k: 'grain', base: '#c8a27a', pat: '#a8835c', rough: 0.8 }, { k: 'seam', base: '#e6ddd0', pat: '#f5efe6', rough: 0.85 },
+      { k: 'dots', base: '#8a9a7b', pat: '#9cab8e', rough: 0.8 }, { k: 'band', base: '#b5654a', pat: '#c87d62', rough: 0.75 },
+      { k: 'rings', base: '#5e7186', pat: '#495a6c', rough: 0.7 }, { k: 'lines', base: '#3a3a38', pat: '#4a4a47', rough: 0.75 }],
+    fx: [0xe0c09a, 0xf3ede4, 0xaab99c, 0xd08a70, 0x8698ad, 0x6a6a66],
+    rim: { c: 0xb5654a, rough: 0.6 }, plate: { c: 0xc8a27a, rough: 0.7 },
+    net: { o: 'rgba(90,75,55,0.7)', m: '#e6ddd0', h: 'rgba(205,193,176,0.9)', k: '#d9cdbb' }, inside: [0x4d4238, 0x9e8f7a, 0.2],
+    rings: ['#b5654a', '#e6ddd0', '#8a9a7b', '#5e7186'],
+    gun: { body: { c: 0xe6ddd0, rough: 0.7 }, barrel: { c: 0x5e7186, rough: 0.6 }, detail: { c: 0xb5654a, rough: 0.6 }, dark: { c: 0xc8a27a, rough: 0.7 } },
+    racket: { frame: { c: 0xc8a27a, rough: 0.6 }, handle: { c: 0x3a3a38, rough: 0.7 }, strings: 0xe6ddd0 },
+    q: { bg: 0xe6ded2, trace: 0x857867, chip: 0xccbca8, glow: 0x8a9a7b, node: 0x5c544c, pulse: 0xc76b4d },
+    tower: { metal: { c: 0xc8a27a, rough: 0.7 }, coil: { c: 0x8a9a7b, rough: 0.7 }, qubit: { c: 0xf3ede4, e: 0xb5654a, ei: 0.35 } },
+    pts: 0xb5654a, holeIn: 0xc77352, holeOut: 0x4d453d, crack: 0x4a4540, digi: { c: 0xb5654a, rough: 0.6 },
+    accent: 0xc57a5f, accent2: 0xd49a82, menuBtn: ['#efe8dd', '#e6ddd0', '#efe8dd'], menuActive: '#d49a82', how: ['#b5654a', '#5e7186'] },
+};
+const PAL_KEYS = Object.keys(PALETTES);
+let PAL = PALETTES.grafito, palKey = 'grafito';
+try { const k = localStorage.getItem('bolas-paleta'); if (PALETTES[k]) { PAL = PALETTES[k]; palKey = k; } } catch (e) {}
+// textura de bola según el tipo de dibujo (sutil, para que se note el giro)
+function ballTex(B) {
+  return canvasTex((g, w, h) => {
+    g.fillStyle = B.base; g.fillRect(0, 0, w, h);
+    const p = B.pat;
+    if (B.k === 'lines') { g.strokeStyle = p; g.lineWidth = 6; for (let y = h / 8; y < h; y += h / 4) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); } }
+    else if (B.k === 'band') { g.fillStyle = p; g.fillRect(0, h * 0.46, w, h * 0.08); }
+    else if (B.k === 'brushed') { for (let i = 0; i < 900; i++) { g.globalAlpha = rnd(0.04, 0.12); g.fillStyle = Math.random() < 0.5 ? '#ffffff' : p; g.fillRect(rnd(0, w), rnd(0, h), rnd(30, 120), 1); } g.globalAlpha = 0.4; g.fillStyle = p; g.fillRect(0, h * 0.49, w, 3); g.globalAlpha = 1; }
+    else if (B.k === 'rings') { g.strokeStyle = p; g.globalAlpha = 0.55; g.lineWidth = 4; for (const x of [w * 0.25, w * 0.75]) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); } g.beginPath(); g.moveTo(0, h / 2); g.lineTo(w, h / 2); g.stroke(); g.globalAlpha = 1; }
+    else if (B.k === 'dots') { g.fillStyle = p; for (let i = 0; i < 8; i++) for (let j = 0; j < 4; j++) { g.beginPath(); g.arc((i + (j % 2) * 0.5) * w / 8, (j + 0.5) * h / 4, 9, 0, 7); g.fill(); } }
+    else if (B.k === 'seam') { g.strokeStyle = p; g.lineWidth = 7; g.beginPath(); for (let x = 0; x <= w; x += 4) { const y = h / 2 + Math.sin(x / w * Math.PI * 4) * h * 0.26; x ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); }
+    else if (B.k === 'grain') { for (let y = 0; y < h; y += 3) { g.globalAlpha = 0.15 + 0.25 * Math.abs(Math.sin(y * 0.11)); g.fillStyle = p; g.beginPath(); g.moveTo(0, y); for (let x = 0; x <= w; x += 16) g.lineTo(x, y + Math.sin(x * 0.02 + y * 0.05) * 3); g.lineTo(w, y + 2); g.lineTo(0, y + 2); g.fill(); } g.globalAlpha = 1; }
+  });
+}
 // Todas son pelotas de goma ligera; cambian el aspecto y el tono del bote
-const TYPES = [
-  { name: 'Grafito',  snd: 190, mat: new THREE.MeshStandardMaterial({ map: texGrafito, roughness: 0.7 }) },
-  { name: 'Cerámica', snd: 230, mat: new THREE.MeshPhysicalMaterial({ map: texCeramica, roughness: 0.25, clearcoat: 0.8, clearcoatRoughness: 0.2 }) },
-  { name: 'Cobre',    snd: 165, mat: new THREE.MeshStandardMaterial({ map: texCobre, metalness: 0.85, roughness: 0.32 }) },
-  { name: 'Acero',    snd: 260, mat: new THREE.MeshStandardMaterial({ map: texAcero, metalness: 0.8, roughness: 0.35 }) },
-  { name: 'Pizarra',  snd: 300, mat: new THREE.MeshStandardMaterial({ map: texPizarra, roughness: 0.75 }) },
-  { name: 'Arena',    snd: 340, mat: new THREE.MeshStandardMaterial({ map: texArena, roughness: 0.8 }) },
-];
-// colores de efectos (halo, anillo del techo, chispas): versiones algo más claras para que se vean
-const TYPE_COLORS = [0x6a6e75, 0xf3f0ea, 0xd08a4a, 0xb4b9c0, 0x8794a0, 0xddcdb3];
+const TYPES = [190, 230, 165, 260, 300, 340].map(snd => ({ snd, mat: new THREE.MeshPhysicalMaterial({ roughness: 0.6 }) }));
+const TYPE_COLORS = [0, 0, 0, 0, 0, 0];   // colores de efectos de cada tipo (los rellena la paleta)
+// materiales compartidos que recolorea la paleta
+const PM = {
+  rim: new THREE.MeshStandardMaterial(), plate: new THREE.MeshStandardMaterial(),
+  gunBody: new THREE.MeshStandardMaterial(), gunBarrel: new THREE.MeshStandardMaterial(), gunDetail: new THREE.MeshStandardMaterial(), gunDark: new THREE.MeshStandardMaterial(),
+  rkFrame: new THREE.MeshStandardMaterial(), rkHandle: new THREE.MeshStandardMaterial(), rkStrings: new THREE.LineBasicMaterial({ transparent: true, opacity: 0.8 }),
+  inside: { uA: { value: new THREE.Color() }, uB: { value: new THREE.Color() }, uK: { value: 0.3 } },
+  tower: null,
+};
+function setMat(m, spec) {
+  m.color.setHex(spec.c); m.metalness = spec.metal || 0; m.roughness = spec.rough ?? 0.5;
+  if ('clearcoat' in m) { m.clearcoat = spec.clear || 0; m.clearcoatRoughness = 0.2; }
+}
 
 // ---------- Sombras de contacto ----------
 const shadowTex = canvasTex((g, w, h) => {
@@ -278,7 +330,8 @@ const wrist = makePanel(0.12, 0.06, { title: 0.36, body: 0.17 });
 // ---------- Instrucciones con dibujos animados (sin texto) ----------
 // Izquierda: la pinza coge la bola y al abrir la mano se lanza.
 // Derecha: juntar los puños y separarlos saca la raqueta; repetirlo la guarda.
-const HOW_INK = '#2a2d33', HOW_SKIN = '#f4f5f7', HOW_BALL = '#b87333', HOW_RK = '#8a8f96';
+const HOW_INK = '#2a2d33', HOW_SKIN = '#f4f5f7';
+let HOW_BALL = '#b87333', HOW_RK = '#8a8f96';
 const ease = k => k < 0 ? 0 : k > 1 ? 1 : k * k * (3 - 2 * k);
 const seg = (t, a, b) => ease((t - a) / (b - a));
 const lerpN = (a, b, k) => a + (b - a) * k;
@@ -299,15 +352,56 @@ function ball(g, x, y, r, a = 1) {
   g.globalAlpha = 1;
 }
 // mano de perfil: (px, py) = punta de la pinza; k = apertura (0 cerrada, 1 abierta)
+// ---- manos realistas: piel con degradado, falanges con pliegues y uñas ----
+const SKIN_L = '#f7dcc7', SKIN = '#e8b996', SKIN_D = '#c48a66', SKIN_LINE = 'rgba(122,74,48,0.8)', NAIL = '#f4dcd2';
+function skinGrad(g, x0, y0, x1, y1) { const gr = g.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, SKIN_L); gr.addColorStop(0.5, SKIN); gr.addColorStop(1, SKIN_D); return gr; }
+// dedo afilado a lo largo de sus articulaciones (pts), con punta redondeada, pliegues y uña
+function finger(g, pts, w0, w1, nail = true) {
+  const n = pts.length, L = [], R = [];
+  for (let i = 0; i < n; i++) {
+    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)];
+    let dx = b[0] - a[0], dy = b[1] - a[1]; const l = Math.hypot(dx, dy) || 1; dx /= l; dy /= l;
+    const w = (w0 + (w1 - w0) * i / (n - 1)) / 2;
+    L.push([pts[i][0] - dy * w, pts[i][1] + dx * w]); R.push([pts[i][0] + dy * w, pts[i][1] - dx * w]);
+  }
+  const t = pts[n - 1], p = pts[n - 2], ang = Math.atan2(t[1] - p[1], t[0] - p[0]);
+  g.beginPath(); g.moveTo(L[0][0], L[0][1]);
+  for (let i = 1; i < n; i++) { const m = [(L[i - 1][0] + L[i][0]) / 2, (L[i - 1][1] + L[i][1]) / 2]; g.quadraticCurveTo(L[i - 1][0], L[i - 1][1], m[0], m[1]); }
+  g.lineTo(L[n - 1][0], L[n - 1][1]);
+  g.arc(t[0], t[1], w1 / 2, ang + Math.PI / 2, ang - Math.PI / 2, true);
+  for (let i = n - 2; i >= 0; i--) { const m = [(R[i + 1][0] + R[i][0]) / 2, (R[i + 1][1] + R[i][1]) / 2]; g.quadraticCurveTo(R[i + 1][0], R[i + 1][1], m[0], m[1]); }
+  g.lineTo(R[0][0], R[0][1]); g.closePath();
+  const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]);
+  g.fillStyle = skinGrad(g, Math.min(...xs), Math.min(...ys) - w0, Math.max(...xs), Math.max(...ys) + w0); g.fill();
+  g.strokeStyle = SKIN_LINE; g.lineWidth = 2.2; g.stroke();
+  g.strokeStyle = 'rgba(122,74,48,0.45)'; g.lineWidth = 1.6;           // pliegues de las articulaciones
+  for (let i = 1; i < n - 1; i++) {
+    const a = pts[i - 1], b = pts[i + 1]; let dx = b[0] - a[0], dy = b[1] - a[1]; const l = Math.hypot(dx, dy) || 1; dx /= l; dy /= l;
+    const w = (w0 + (w1 - w0) * i / (n - 1)) * 0.3;
+    g.beginPath(); g.moveTo(pts[i][0] - dy * w, pts[i][1] + dx * w); g.quadraticCurveTo(pts[i][0] + dx * 2, pts[i][1] + dy * 2, pts[i][0] + dy * w, pts[i][1] - dx * w); g.stroke();
+  }
+  if (nail) {                                                          // uña
+    g.save(); g.translate(t[0] - Math.cos(ang) * w1 * 0.32, t[1] - Math.sin(ang) * w1 * 0.32); g.rotate(ang);
+    g.fillStyle = NAIL; g.strokeStyle = 'rgba(160,110,90,0.7)'; g.lineWidth = 1.4;
+    g.beginPath(); g.ellipse(0, -w1 * 0.08, w1 * 0.36, w1 * 0.27, 0, 0, 7); g.fill(); g.stroke(); g.restore();
+  }
+}
+// mano de perfil (lado del pulgar): (px, py) = punta de la pinza; k = apertura (0 cerrada, 1 abierta)
 function pinchHand(g, px, py, k) {
-  inked(g, [
-    { cap: [px - 185, py + 75, px - 120, py + 42], w: 40 },                       // antebrazo
-    { ell: [px - 100, py + 22, 50, 40, -0.35] },                                  // palma
-    { cap: [px - 92, py + 52, px - 8, py + 12 + 26 * k], w: 23 },                 // pulgar
-    { cap: [px - 88, py - 6, px - 6, py - 8 - 30 * k], w: 21 },                   // índice
-  ]);
-  g.strokeStyle = HOW_INK; g.lineWidth = 4;                                       // dedos doblados
-  for (let i = 0; i < 3; i++) { g.beginPath(); g.arc(px - 108 + i * 6, py + 8 + i * 12, 16, -0.4, 1.4); g.stroke(); }
+  finger(g, [[px - 250, py + 108], [px - 200, py + 80], [px - 150, py + 50]], 50, 46, false);   // antebrazo
+  g.beginPath();                                                                                // palma y dorso
+  g.moveTo(px - 158, py + 24);
+  g.bezierCurveTo(px - 128, py - 10, px - 96, py - 16, px - 68, py - 10);
+  g.lineTo(px - 60, py + 12);
+  g.bezierCurveTo(px - 66, py + 42, px - 88, py + 64, px - 120, py + 70);
+  g.bezierCurveTo(px - 142, py + 72, px - 156, py + 64, px - 160, py + 50); g.closePath();
+  g.fillStyle = skinGrad(g, px - 150, py - 15, px - 80, py + 75); g.fill(); g.strokeStyle = SKIN_LINE; g.lineWidth = 2.2; g.stroke();
+  for (let i = 2; i >= 0; i--)                                                                  // corazón, anular y meñique doblados
+    finger(g, [[px - 74, py + 10 + i * 13], [px - 52, py + 14 + i * 13], [px - 46, py + 30 + i * 11], [px - 58, py + 40 + i * 9]], 16 - i, 13 - i, false);
+  finger(g, [[px - 72, py - 2], [px - 46, py - 6 - 10 * k], [px - 22, py - 9 - 20 * k], [px - 5, py - 8 - 30 * k]], 19, 14);       // índice
+  finger(g, [[px - 128, py + 50], [px - 84, py + 54], [px - 42, py + 40 + 10 * k], [px - 8, py + 12 + 26 * k]], 25, 17);         // pulgar
+  g.strokeStyle = 'rgba(122,74,48,0.35)'; g.lineWidth = 1.5;                                    // tendón y nudillo
+  g.beginPath(); g.moveTo(px - 140, py + 18); g.quadraticCurveTo(px - 110, py + 4, px - 78, py + 2); g.stroke();
 }
 function drawGrab(g, t) {
   const B = [250, 210];
@@ -338,15 +432,20 @@ function drawGrab(g, t) {
   }
 }
 // puño de frente (sd = -1 izquierdo, 1 derecho)
+// puño de frente, con los dedos doblados hacia el espectador (sd = -1 izquierdo, 1 derecho)
 function fist(g, cx, cy, sd, a = 1) {
   g.globalAlpha = a;
-  inked(g, [
-    { cap: [cx, cy + 40, cx + sd * 12, cy + 140], w: 42 },                        // antebrazo
-    { rr: [cx - 40, cy - 34, 80, 72, 22] },                                       // puño
-  ]);
-  g.strokeStyle = HOW_INK; g.lineWidth = 4;
-  for (let i = 0; i < 3; i++) { const x = cx - 22 + i * 20; g.beginPath(); g.moveTo(x, cy - 30); g.lineTo(x, cy - 8); g.stroke(); }   // nudillos
-  g.lineWidth = 5; g.beginPath(); g.moveTo(cx - sd * 32, cy + 12); g.quadraticCurveTo(cx, cy + 4, cx + sd * 26, cy + 20); g.stroke();   // pulgar
+  finger(g, [[cx + sd * 14, cy + 160], [cx + sd * 6, cy + 100], [cx, cy + 42]], 46, 50, false);   // antebrazo
+  g.beginPath(); g.roundRect(cx - 42, cy - 30, 84, 74, 24);                                        // mano
+  g.fillStyle = skinGrad(g, cx - 42, cy - 30, cx + 42, cy + 44); g.fill(); g.strokeStyle = SKIN_LINE; g.lineWidth = 2.2; g.stroke();
+  for (let i = 0; i < 4; i++) {                                                                    // cuatro dedos doblados
+    const x = cx - 31 + i * 20.5, top = cy - 36 + (i === 0 || i === 3 ? 5 : 0), h = 40 - (i === 3 ? 6 : 0);
+    g.beginPath(); g.roundRect(x - 10, top, 20, h, 9);
+    g.fillStyle = skinGrad(g, x - 10, top, x + 10, top + h); g.fill(); g.strokeStyle = SKIN_LINE; g.lineWidth = 2; g.stroke();
+    g.strokeStyle = 'rgba(122,74,48,0.45)'; g.lineWidth = 1.5;                                     // pliegue de la articulación
+    g.beginPath(); g.moveTo(x - 6, top + h * 0.52); g.quadraticCurveTo(x, top + h * 0.58, x + 6, top + h * 0.52); g.stroke();
+  }
+  finger(g, [[cx - sd * 46, cy + 30], [cx - sd * 22, cy + 22], [cx + sd * 4, cy + 14], [cx + sd * 20, cy + 10]], 24, 18);   // pulgar por delante
   g.globalAlpha = 1;
 }
 function racketPic(g, cx, cy, sc) {
@@ -861,7 +960,7 @@ function updateHands(frame, ref, dt) {
 
     const hp = holdWorld(H, H.ball ? H.ball.r : BALL_R, V());
     H.cur.visible = rk.holder !== H && gun.holder !== H; H.cur.position.copy(hp);
-    H.cur.material.color.set(H.ball ? 0xd08a4a : H.raw ? 0xece9e4 : 0xffffff);
+    H.cur.material.color.set(H.ball ? PAL.accent : H.raw ? 0xece9e4 : 0xffffff);
     H.halo.visible = !!best && !H.ball;
     if (best) { H.halo.position.copy(best.pos); H.halo.scale.setScalar(best.r * 1.18); H.halo.material.color.set(TYPE_COLORS[best.t]); }
   }
@@ -951,7 +1050,7 @@ function updateHeld(dt) {
 const rk = { holder: null, valid: false, p0: V(), p1: V(), q0: new THREE.Quaternion(), q1: new THREE.Quaternion(),
   M0: new THREE.Matrix4(), M1: new THREE.Matrix4(), group: new THREE.Group() };
 (function buildRacket() {
-  const g = rk.group, frameMat = new THREE.MeshStandardMaterial({ color: 0xb87333, metalness: 0.85, roughness: 0.3 });
+  const g = rk.group, frameMat = PM.rkFrame;
   const ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.07, 10, 64), frameMat);
   ring.scale.set(RK.ax, RK.ay, RK.ax); ring.position.y = RK.hy; g.add(ring);
   const face = new THREE.Mesh(new THREE.CircleGeometry(1, 48), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.08, side: THREE.DoubleSide, depthWrite: false }));
@@ -960,8 +1059,8 @@ const rk = { holder: null, valid: false, p0: V(), p1: V(), q0: new THREE.Quatern
   for (let x = -RK.ax + 0.016; x < RK.ax; x += 0.019) { const h = RK.ay * Math.sqrt(Math.max(0, 1 - (x / RK.ax) ** 2)); pts.push(x, RK.hy - h, 0, x, RK.hy + h, 0); }
   for (let y = -RK.ay + 0.016; y < RK.ay; y += 0.019) { const w = RK.ax * Math.sqrt(Math.max(0, 1 - (y / RK.ay) ** 2)); pts.push(-w, RK.hy + y, 0, w, RK.hy + y, 0); }
   const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
-  g.add(new THREE.LineSegments(sg, new THREE.LineBasicMaterial({ color: 0xece9e4, transparent: true, opacity: 0.8 })));
-  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.016, 0.2, 16), new THREE.MeshStandardMaterial({ color: 0x2b2d31, roughness: 0.7 }));
+  g.add(new THREE.LineSegments(sg, PM.rkStrings));
+  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.016, 0.2, 16), PM.rkHandle);
   handle.position.y = 0.04; g.add(handle);
   const throat = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.012, RK.hy - RK.ay - 0.14, 10), frameMat);
   throat.position.y = 0.14 + (RK.hy - RK.ay - 0.14) / 2; g.add(throat);
@@ -1058,7 +1157,7 @@ const gun = { holder: null, group: new THREE.Group(), model: new THREE.Group(), 
   const g = gun.model;
   const mat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.45, metalness: 0.1, ...extra });
   // pistola: cuerpo grafito, cañón de acero, detalles de cobre
-  const orange = mat(0x2b2d31, { roughness: 0.55 }), blue = mat(0x8a8f96, { metalness: 0.8, roughness: 0.35 }), yellow = mat(0xb87333, { metalness: 0.85, roughness: 0.3 }), dark = mat(0x1f2124, { roughness: 0.7 });
+  const orange = PM.gunBody, blue = PM.gunBarrel, yellow = PM.gunDetail, dark = PM.gunDark;
   const add = (geo, m, x, y, z, rx = 0) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.rotation.x = rx; g.add(o); return o; };
   add(new THREE.BoxGeometry(0.075, 0.095, 0.27), orange, 0, 0.03, -0.1);                                  // cuerpo
   add(new THREE.BoxGeometry(0.08, 0.02, 0.2), yellow, 0, -0.022, -0.12);                                   // franja
@@ -1360,23 +1459,24 @@ const hoops = [], bins = [], swallowed = [];
 const _hz = new THREE.Vector3(0, 0, 1);
 
 // Red de cuerda naranja: rombos de cuerda trenzada con nudos, huecos transparentes
-const netTex = canvasTex((g, w, h) => {
-  g.clearRect(0, 0, w, h);
+function drawNet(g, w, h) {   // colores de la cuerda según la paleta
+  const N = PAL.net; g.clearRect(0, 0, w, h);
   const step = 64, rope = (x0, y0, x1, y1) => {
     g.lineCap = 'round';
-    g.strokeStyle = 'rgba(20,21,24,0.85)'; g.lineWidth = 12; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
-    g.strokeStyle = '#4a4d53'; g.lineWidth = 8; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
-    g.strokeStyle = 'rgba(110,114,121,0.9)'; g.lineWidth = 2; g.setLineDash([5, 6]); g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); g.setLineDash([]);
+    g.strokeStyle = N.o; g.lineWidth = 12; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+    g.strokeStyle = N.m; g.lineWidth = 8; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+    g.strokeStyle = N.h; g.lineWidth = 2; g.setLineDash([5, 6]); g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); g.setLineDash([]);
   };
   for (let x = -h; x < w + h; x += step) { rope(x, 0, x + h, h); rope(x + h, 0, x, h); }
-  g.fillStyle = '#5c6067';
+  g.fillStyle = N.k;
   for (let x = 0; x <= w; x += step) for (let y = 0; y <= h; y += step) { g.beginPath(); g.arc(x + (y / step % 2 ? step / 2 : 0), y, 8, 0, 7); g.fill(); }
-}, 512, 256);
+}
+const netTex = canvasTex(drawNet, 512, 256), netTexList = [];
 netTex.wrapT = THREE.RepeatWrapping;
 // Diana del fondo
 const RINGS = [[0.18, 100, '#b87333'], [0.42, 50, '#ece9e4'], [0.7, 30, '#5b6670'], [1.0, 20, '#2b2d31']];
-const dianaTex = canvasTex((g, w, h) => {
-  const c = w / 2;
+function drawDiana(g, w, h) {
+  const c = w / 2; g.clearRect(0, 0, w, h);
   for (let i = RINGS.length - 1; i >= 0; i--) {
     const [k, , col] = RINGS[i], inner = i ? RINGS[i - 1][0] : 0;
     g.fillStyle = col; g.beginPath(); g.arc(c, c, k * c, 0, 7); g.fill();
@@ -1384,16 +1484,17 @@ const dianaTex = canvasTex((g, w, h) => {
     g.strokeStyle = 'rgba(255,255,255,0.95)'; g.lineWidth = 4; g.beginPath(); g.arc(c, c, k * c - 2, 0, 7); g.stroke();
   }
   g.strokeStyle = 'rgba(90,96,106,0.6)'; g.lineWidth = 3; g.beginPath(); g.moveTo(c - 12, c); g.lineTo(c + 12, c); g.moveTo(c, c - 12); g.lineTo(c, c + 12); g.stroke();
-}, 512, 512);
+}
+const dianaTex = canvasTex(drawDiana, 512, 512);
 // Pared interior: azul profundo, más oscura abajo, con líneas que marcan la profundidad
 function insideMat(depth) {
-  return new THREE.ShaderMaterial({ uniforms: { uD: { value: depth } },
+  return new THREE.ShaderMaterial({ uniforms: { uD: { value: depth }, ...PM.inside },
     vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
-    fragmentShader: `uniform float uD; varying vec2 vUv;
+    fragmentShader: `uniform float uD, uK; uniform vec3 uA, uB; varying vec2 vUv;
       void main(){
-        vec3 c = mix(vec3(0.06, 0.065, 0.075), vec3(0.24, 0.25, 0.28), pow(vUv.y, 0.8));
+        vec3 c = mix(uA, uB, pow(vUv.y, 0.8));
         float hl = step(0.9, fract(vUv.y * uD / 0.1)), vl = step(0.93, fract(vUv.x * 32.0));
-        c *= 1.0 + 0.35 * max(hl, vl);
+        c *= 1.0 + uK * max(hl, vl);
         gl_FragColor = vec4(c, 1.0); }`,
     side: THREE.BackSide });
 }
@@ -1401,13 +1502,13 @@ function netBasket(R, depth) {
   const g = new THREE.Group(), rB = R * BOTTOM_K;
   const wall = new THREE.Mesh(new THREE.CylinderGeometry(R, rB, depth, 64, 1, true), insideMat(depth));
   wall.position.y = -depth / 2;
-  const t = netTex.clone(); t.needsUpdate = true; t.repeat.set(Math.round(R * 2 * Math.PI / (8 * 0.09)), depth / (4 * 0.09));   // rombos de ~9 cm
+  const t = netTex.clone(); t.needsUpdate = true; netTexList.push(t); t.repeat.set(Math.round(R * 2 * Math.PI / (8 * 0.09)), depth / (4 * 0.09));   // rombos de ~9 cm
   const net = new THREE.Mesh(new THREE.CylinderGeometry(R * 0.985, rB * 0.985, depth, 64, 1, true),
     new THREE.MeshStandardMaterial({ map: t, alphaTest: 0.35, side: THREE.DoubleSide, roughness: 0.85 }));
   net.position.y = -depth / 2;
-  const diana = new THREE.Mesh(new THREE.CircleGeometry(rB * 0.98, 64).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: dianaTex, color: 0xdedad4 }));
+  const diana = new THREE.Mesh(new THREE.CircleGeometry(rB * 0.98, 64).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: dianaTex, color: 0xe4e4e4 }));
   diana.position.y = -depth + 0.004;
-  const under = new THREE.Mesh(new THREE.CircleGeometry(rB, 64).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x2b2d31 }));
+  const under = new THREE.Mesh(new THREE.CircleGeometry(rB, 64).rotateX(Math.PI / 2), PM.plate);
   under.position.y = -depth;
   g.add(wall, net, diana, under);
   return { g, net };
@@ -1415,10 +1516,10 @@ function netBasket(R, depth) {
 function makeHoop(pos, nH) {
   const g = new THREE.Group();
   g.position.copy(pos); g.quaternion.setFromUnitVectors(_hz, nH);
-  const orange = new THREE.MeshStandardMaterial({ color: 0xb87333, metalness: 0.85, roughness: 0.3 });   // aro de cobre
+  const orange = PM.rim;   // aro (color de la paleta)
   g.add(new THREE.Mesh(new THREE.TorusGeometry(HR, 0.012, 12, 72).rotateX(Math.PI / 2), orange));
   const { g: nb, net } = netBasket(HR, NET_H); g.add(nb);
-  const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.012, 40).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x2b2d31, roughness: 0.55 }));
+  const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.012, 40).rotateX(Math.PI / 2), PM.plate);
   plate.position.set(0, -0.03, -(HR + 0.055)); g.add(plate);
   const arm = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.025, 0.06), orange); arm.position.set(0, 0, -(HR + 0.025)); g.add(arm);
   scene.add(g); g.updateMatrixWorld(true);
@@ -1520,7 +1621,7 @@ function updateProps(dt) {
         if (pts) {
           score += pts;
           const label = pts === 100 ? '¡DIANA! +100' : `¡CANASTA! +${pts}`;
-          floatText(label, new THREE.Vector3(S.P.c.x, S.P.top + 0.3, S.P.c.z), pts === 100 ? 0xe0a060 : 0xd08a4a, true);
+          floatText(label, new THREE.Vector3(S.P.c.x, S.P.top + 0.3, S.P.c.z), pts === 100 ? PAL.accent2 : PAL.accent, true);
           sndBasket(S.P.c, pts);
         }
         burst(new THREE.Vector3(S.x, S.y, S.z), TYPE_COLORS[S.ball.t], S.r);
@@ -1562,9 +1663,10 @@ const depthClearMat = new THREE.ShaderMaterial({
 
 // Mundo detrás de los agujeros: un "ordenador cuántico" de fantasía, blanco y luminoso, con pistas de
 // circuito por las que viajan pulsos de luz pastel, chips que respiran y estructuras flotantes.
-const matrixU = { uT: { value: 0 } };
+const matrixU = { uT: { value: 0 }, uBg: { value: new THREE.Color() }, uTrace: { value: new THREE.Color() }, uChip: { value: new THREE.Color() },
+  uGlow: { value: new THREE.Color() }, uNode: { value: new THREE.Color() }, uPulse: { value: new THREE.Color() } };
 const CIRCUIT_FS = `
-uniform float uT, uCell, uDim; varying vec3 vW; varying vec3 vN;
+uniform float uT, uCell, uDim; uniform vec3 uBg, uTrace, uChip, uGlow, uNode, uPulse; varying vec3 vW; varying vec3 vN;
 float h1(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float seg(float d, float w){ return 1.0 - smoothstep(w, w * 1.7, d); }
 void main(){
@@ -1586,12 +1688,12 @@ void main(){
   float ph = fract(uv.x * 0.12 - uT * (0.25 + 0.35 * h1(vec2(1.0, id.y))) + h1(vec2(2.0, id.y)));
   float pv = fract(uv.y * 0.12 - uT * (0.25 + 0.35 * h1(vec2(id.x, 4.0))) + h1(vec2(id.x, 6.0)));
   float pulse = H * smoothstep(0.9, 1.0, ph) + Vt * smoothstep(0.9, 1.0, pv);
-  vec3 c = vec3(0.925, 0.912, 0.893);                                   // marfil
-  c = mix(c, vec3(0.36, 0.38, 0.42), line * 0.85);                       // pistas grafito
-  c = mix(c, vec3(0.80, 0.78, 0.74), chip);
-  c = mix(c, vec3(0.72, 0.45, 0.20), chip * (0.5 + 0.5 * sin(uT * 2.0 + h1(id) * 6.28)) * 0.35);
-  c = mix(c, vec3(0.24, 0.25, 0.28), node);
-  c = mix(c, vec3(0.85, 0.52, 0.22), clamp(pulse, 0.0, 1.0));             // pulsos de cobre
+  vec3 c = uBg;
+  c = mix(c, uTrace, line * 0.85);
+  c = mix(c, uChip, chip);
+  c = mix(c, uGlow, chip * (0.5 + 0.5 * sin(uT * 2.0 + h1(id) * 6.28)) * 0.35);
+  c = mix(c, uNode, node);
+  c = mix(c, uPulse, clamp(pulse, 0.0, 1.0));
   gl_FragColor = vec4(c * uDim, 1.0);
 }`;
 function circuitMat(cell, dim = 1) {
@@ -1604,9 +1706,8 @@ const matrixObjs = [], quantumSpin = [];
 function addQ(o, order) { o.renderOrder = order; scene.add(o); matrixObjs.push(o); return o; }
 // "lámpara" de ordenador cuántico: discos plateados apilados, varillas, bobinas pastel y cúbits que brillan
 function quantumTower(x, z, scale) {
-  const g = new THREE.Group(), silver = new THREE.MeshStandardMaterial({ color: 0xb87333, metalness: 0.85, roughness: 0.28, ...stencilEq });
-  const coil = new THREE.MeshStandardMaterial({ color: 0x2b2d31, roughness: 0.5, ...stencilEq });
-  const qubit = new THREE.MeshStandardMaterial({ color: 0xf3efe8, emissive: 0xe0b48c, emissiveIntensity: 0.5, ...stencilEq });
+  if (!PM.tower) { PM.tower = { metal: new THREE.MeshStandardMaterial(stencilEq), coil: new THREE.MeshStandardMaterial(stencilEq), qubit: new THREE.MeshStandardMaterial(stencilEq) }; paintTower(); }
+  const g = new THREE.Group(), silver = PM.tower.metal, coil = PM.tower.coil, qubit = PM.tower.qubit;
   let y = 0; const radii = [0.75, 0.62, 0.5, 0.4, 0.3];
   radii.forEach((r, i) => {
     const disc = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.06, 48), silver); disc.position.y = y; g.add(disc);
@@ -1632,7 +1733,7 @@ function buildMatrix() {
   const N = 700, pos = new Float32Array(N * 3);
   for (let i = 0; i < N; i++) { const a = rnd(0, Math.PI * 2), d = half + rnd(0.3, 10); pos.set([c.x + Math.cos(a) * d, floorY + rnd(0, 6), c.z + Math.sin(a) * d], i * 3); }
   const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  matrixPts = addQ(new THREE.Points(pg, new THREE.PointsMaterial({ color: 0xc58a52, size: 0.03, transparent: true, opacity: 0.8, depthWrite: false, ...stencilEq })), -0.37);
+  matrixPts = addQ(new THREE.Points(pg, new THREE.PointsMaterial({ color: PAL.pts, size: 0.03, transparent: true, opacity: 0.8, depthWrite: false, ...stencilEq })), -0.37);
 }
 function clearMatrix() {
   for (const o of matrixObjs) scene.remove(o);
@@ -1674,7 +1775,7 @@ function makeHole(P, pw, R) {
   const dc = new THREE.Mesh(geo, depthClearMat); dc.renderOrder = -0.5;
   // borde roto: verde digital por dentro, oscuro por fuera
   const rp = [], rc = [], ri = [];
-  ring.forEach(([x, z]) => { const k = rnd(1.1, 1.25); rp.push(x, 0.001, z, x * k, 0.001, z * k); rc.push(0.82, 0.52, 0.27, 0.17, 0.17, 0.19); });
+  ring.forEach(([x, z]) => { const k = rnd(1.1, 1.25); rp.push(x, 0.001, z, x * k, 0.001, z * k); rc.push(...rgb(PAL.holeIn), ...rgb(PAL.holeOut)); });
   for (let i = 0; i < N; i++) { const a = i * 2, b = ((i + 1) % N) * 2; ri.push(a, a + 1, b + 1, a, b + 1, b); }
   const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(rp, 3)); rg.setAttribute('color', new THREE.Float32BufferAttribute(rc, 3)); rg.setIndex(ri);
   const rim = new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.92, side: THREE.DoubleSide, depthWrite: false }));
@@ -1687,7 +1788,7 @@ function makeHole(P, pw, R) {
     while (rr < end) { rr += R * rnd(0.15, 0.35); a += rnd(-0.25, 0.25); const nx = Math.cos(a) * rr, nz = Math.sin(a) * rr; cp.push(x, 0.002, z, nx, 0.002, nz); x = nx; z = nz; }
   }
   const cg = new THREE.BufferGeometry(); cg.setAttribute('position', new THREE.Float32BufferAttribute(cp, 3));
-  const cracks = new THREE.LineSegments(cg, new THREE.LineBasicMaterial({ color: 0x2b2d31, transparent: true, opacity: 0.75 }));
+  const cracks = new THREE.LineSegments(cg, new THREE.LineBasicMaterial({ color: PAL.crack, transparent: true, opacity: 0.75 }));
   cracks.renderOrder = 2;
   grp.add(mask, dc, rim, cracks); scene.add(grp);
   const c = new THREE.Vector3().setFromMatrixPosition(grp.matrix);
@@ -1765,15 +1866,16 @@ function racketVsWalls(dt) {
 // ---------- Menú en la palma izquierda ----------
 // Al mirar la palma abierta de la mano izquierda aparece un menú; se pulsa tocándolo con el índice
 // derecho (o con el mando derecho). RESET: nueva partida · SCAN: volver a escanear · MUTE: música.
-const MENU_W = 0.2, MENU_H = 0.1;
-const MENU_BTNS = [
-  { id: 'reset', label: 'RESET', x: -0.064, color: '#ece9e4' },
-  { id: 'scan',  label: 'SCAN',  x: 0,      color: '#e2ddd5' },
-  { id: 'mute',  label: 'MUTE',  x: 0.064,  color: '#ece9e4' },
+// Debajo, cuatro muestras para elegir la paleta de colores.
+const MENU_W = 0.2, MENU_H = 0.145;
+const MENU_ITEMS = [
+  { id: 'reset', label: 'RESET', x: -0.064, y: 0.012, w: 0.056, h: 0.05 },
+  { id: 'scan',  label: 'SCAN',  x: 0,      y: 0.012, w: 0.056, h: 0.05 },
+  { id: 'mute',  label: 'MUTE',  x: 0.064,  y: 0.012, w: 0.056, h: 0.05 },
+  ...PAL_KEYS.map((k, i) => ({ id: 'pal:' + k, pal: k, x: -0.0675 + i * 0.045, y: -0.046, w: 0.04, h: 0.036 })),
 ];
-const BTN_W = 0.056, BTN_H = 0.056, BTN_Y = -0.012;
 const menu = makePanel(MENU_W, MENU_H);
-menu.c.width = 800; menu.c.height = 400; menu.mesh.renderOrder = 25;
+menu.c.width = 800; menu.c.height = 580; menu.mesh.renderOrder = 25;
 menu.mesh.material.depthTest = false;
 let menuShowT = 0, menuHideT = 0, menuHover = -1, menuPressed = -1, menuFlash = { i: -1, t: 0 }, menuKey = '';
 function menuIcon(g, id, cx, cy, s, on) {
@@ -1790,25 +1892,35 @@ function menuIcon(g, id, cx, cy, s, on) {
   } else {
     g.beginPath(); g.ellipse(cx - s * 0.16, cy + s * 0.26, s * 0.16, s * 0.12, -0.4, 0, 7); g.fill();
     g.beginPath(); g.moveTo(cx - s * 0.02, cy + s * 0.24); g.lineTo(cx - s * 0.02, cy - s * 0.36); g.lineTo(cx + s * 0.3, cy - s * 0.24); g.stroke();
-    if (!on) { g.strokeStyle = '#e07a8f'; g.lineWidth = s * 0.13; g.beginPath(); g.moveTo(cx - s * 0.42, cy - s * 0.42); g.lineTo(cx + s * 0.42, cy + s * 0.42); g.stroke(); }
+    if (!on) { g.strokeStyle = '#c0533f'; g.lineWidth = s * 0.13; g.beginPath(); g.moveTo(cx - s * 0.42, cy - s * 0.42); g.lineTo(cx + s * 0.42, cy + s * 0.42); g.stroke(); }
   }
 }
 function drawMenu() {
-  const key = [menuHover, menuPressed, menuFlash.i, musicOn, score, balls.length].join('|'); if (key === menuKey) return; menuKey = key;
-  const { g, c } = menu, W = c.width, H = c.height, px = x => (x / MENU_W + 0.5) * W, py = y => (0.5 - y / MENU_H) * H, k = W / MENU_W;
+  const key = [menuHover, menuPressed, menuFlash.i, musicOn, score, balls.length, palKey].join('|'); if (key === menuKey) return; menuKey = key;
+  const { g, c } = menu, W = c.width, H = c.height, k = W / MENU_W, px = x => (x / MENU_W + 0.5) * W, py = y => (0.5 - y / MENU_H) * H;
   g.clearRect(0, 0, W, H);
-  g.fillStyle = 'rgba(255,255,255,0.86)'; g.beginPath(); g.roundRect(2, 2, W - 4, H - 4, H * 0.16); g.fill();
+  g.fillStyle = 'rgba(255,255,255,0.88)'; g.beginPath(); g.roundRect(2, 2, W - 4, H - 4, 64); g.fill();
   g.strokeStyle = 'rgba(0,0,0,0.07)'; g.lineWidth = 2; g.stroke();
-  g.fillStyle = 'rgba(0,0,0,0.55)'; g.font = `500 ${H * 0.085}px ${PANEL_FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillText(`${score} puntos  ·  ${balls.length} bolas`, W / 2, H * 0.12);
-  MENU_BTNS.forEach((b, i) => {
-    const x0 = px(b.x - BTN_W / 2), y0 = py(BTN_Y + BTN_H / 2), bw = BTN_W * k, bh = BTN_H * k;
-    const active = b.id === 'mute' && !musicOn, hot = menuHover === i, down = menuPressed === i || menuFlash.i === i;
+  g.fillStyle = 'rgba(0,0,0,0.55)'; g.font = `500 34px ${PANEL_FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(`${score} puntos  ·  ${balls.length} bolas`, W / 2, py(0.057));
+  g.strokeStyle = 'rgba(0,0,0,0.08)'; g.lineWidth = 2; g.beginPath(); g.moveTo(px(-0.088), py(-0.02)); g.lineTo(px(0.088), py(-0.02)); g.stroke();
+  MENU_ITEMS.forEach((b, i) => {
+    const x0 = px(b.x - b.w / 2), y0 = py(b.y + b.h / 2), bw = b.w * k, bh = b.h * k;
+    const hot = menuHover === i, down = menuPressed === i || menuFlash.i === i;
     g.save(); if (down) { g.translate(x0 + bw / 2, y0 + bh / 2); g.scale(0.94, 0.94); g.translate(-x0 - bw / 2, -y0 - bh / 2); }
-    g.fillStyle = active ? '#dba878' : b.color; g.beginPath(); g.roundRect(x0, y0, bw, bh, bh * 0.22); g.fill();
-    if (hot || down) { g.strokeStyle = 'rgba(40,45,52,0.55)'; g.lineWidth = 5; g.stroke(); }
-    menuIcon(g, b.id, x0 + bw / 2, y0 + bh * 0.4, bh * 0.42, musicOn);
-    g.fillStyle = '#3a3f47'; g.font = `650 ${bh * 0.17}px ${PANEL_FONT}`; g.fillText(b.label, x0 + bw / 2, y0 + bh * 0.82);
+    if (b.pal) {                                      // muestra de paleta: tres colores
+      const P = PALETTES[b.pal], sel = b.pal === palKey;
+      g.fillStyle = '#ffffff'; g.beginPath(); g.roundRect(x0, y0, bw, bh, bh * 0.28); g.fill();
+      P.swatch.forEach((col, j) => { g.fillStyle = col; g.beginPath(); g.arc(x0 + bw * (0.27 + j * 0.23), y0 + bh / 2, bh * 0.2, 0, 7); g.fill(); });
+      g.strokeStyle = sel ? '#2a2d33' : hot ? 'rgba(40,45,52,0.45)' : 'rgba(0,0,0,0.12)'; g.lineWidth = sel ? 7 : 3;
+      g.beginPath(); g.roundRect(x0, y0, bw, bh, bh * 0.28); g.stroke();
+    } else {
+      const active = b.id === 'mute' && !musicOn;
+      g.fillStyle = active ? PAL.menuActive : PAL.menuBtn[i]; g.beginPath(); g.roundRect(x0, y0, bw, bh, bh * 0.22); g.fill();
+      if (hot || down) { g.strokeStyle = 'rgba(40,45,52,0.55)'; g.lineWidth = 5; g.stroke(); }
+      menuIcon(g, b.id, x0 + bw / 2, y0 + bh * 0.4, bh * 0.42, musicOn);
+      g.fillStyle = '#3a3f47'; g.font = `600 ${bh * 0.17}px ${PANEL_FONT}`; g.fillText(b.label, x0 + bw / 2, y0 + bh * 0.82);
+    }
     g.restore();
   });
   menu.tex.needsUpdate = true;
@@ -1827,34 +1939,31 @@ function updateMenu(dt) {
   }
   if (menu.mesh.visible && menuHideT > 0.4) { menu.mesh.visible = false; menuHover = menuPressed = -1; }
   if (!menu.mesh.visible) return;
-  // sobre la palma, mirando a la cabeza
-  if (L && L.ok && L.n) {
-    _mt.copy(L.palm).addScaledVector(L.n, 0.09).add(new THREE.Vector3(0, 0.03, 0));
+  if (L && L.ok && L.n) {   // sobre la palma, mirando a la cabeza
+    _mt.copy(L.palm).addScaledVector(L.n, 0.09).add(new THREE.Vector3(0, 0.04, 0));
     menu.mesh.position.lerp(_mt, menu.mesh.userData.placed ? Math.min(1, dt * 14) : 1); menu.mesh.userData.placed = true;
     menu.mesh.lookAt(headPos);
   }
   menu.mesh.updateMatrixWorld();
-  // pulsar con el índice derecho
   menuHover = -1;
-  if (R && R.ok && R.tip) {
+  if (R && R.ok && R.tip) {   // pulsar con el índice derecho
     const lp = menu.mesh.worldToLocal(_mt.copy(R.tip));
-    MENU_BTNS.forEach((b, i) => {
-      if (Math.abs(lp.x - b.x) < BTN_W / 2 && Math.abs(lp.y - BTN_Y) < BTN_H / 2 && lp.z < 0.04 && lp.z > -0.04) menuHover = i;
-    });
+    MENU_ITEMS.forEach((b, i) => { if (Math.abs(lp.x - b.x) < b.w / 2 && Math.abs(lp.y - b.y) < b.h / 2 && lp.z < 0.04 && lp.z > -0.04) menuHover = i; });
     if (menuHover >= 0 && lp.z < 0.012 && menuPressed < 0 && now - menuFlash.t > 0.5) {
       menuPressed = menuHover; menuFlash = { i: menuHover, t: now };
       if (actx) tone(master, 880, 'sine', 0.12, actx.currentTime, 0.07, 1300); pulse(R, 0.5, 30);
-      menuAction(MENU_BTNS[menuHover].id);
+      menuAction(MENU_ITEMS[menuHover]);
     }
     if (menuPressed >= 0 && (menuHover !== menuPressed || lp.z > 0.025)) menuPressed = -1;
   }
   if (menuFlash.i >= 0 && now - menuFlash.t > 0.25) menuFlash.i = -1;
   drawMenu();
 }
-function menuAction(id) {
-  if (id === 'mute') setMusic(!musicOn);
-  else if (id === 'reset') resetGame(true);
-  else if (id === 'scan') rescan();
+function menuAction(item) {
+  if (item.pal) applyPalette(item.pal);
+  else if (item.id === 'mute') setMusic(!musicOn);
+  else if (item.id === 'reset') resetGame(true);
+  else if (item.id === 'scan') rescan();
 }
 // Vacía la partida: bolas, agujeros, trozos, raqueta y pistola
 function clearGame() {
@@ -1941,7 +2050,7 @@ function loop(t, frame) {
     processGoals();
     processHoles();
     for (const b of [...balls]) if (b.inMatrix && now - b.inMatrix > 2.5) {   // absorbida por Matrix
-      score += 5; burst(b.pos, 0xd08a4a, b.r); removeBall(b);
+      score += 5; burst(b.pos, PAL.accent, b.r); removeBall(b);
     }
     updateProps(dt); updateDebris(dt); updateMatrix(dt);
     const L = hands.left;   // panel de muñeca
@@ -1975,6 +2084,36 @@ function beginPlay() {
   if (virtualRoom) setTimeout(() => showInfo(['Sala virtual de 5×5 m', 'Haz la configuración del espacio de la Quest'], 5), 16500);
 }
 
+// ---------- Aplicar una paleta ----------
+function paintTower() {
+  if (!PM.tower) return;
+  const T = PAL.tower; setMat(PM.tower.metal, T.metal); setMat(PM.tower.coil, T.coil);
+  PM.tower.qubit.color.setHex(T.qubit.c); PM.tower.qubit.emissive.setHex(T.qubit.e); PM.tower.qubit.emissiveIntensity = T.qubit.ei;
+}
+function applyPalette(key) {
+  PAL = PALETTES[key] || PALETTES.grafito; palKey = PALETTES[key] ? key : 'grafito';
+  try { localStorage.setItem('bolas-paleta', palKey); } catch (e) {}
+  PAL.balls.forEach((B, i) => {
+    const m = TYPES[i].mat, old = m.map;
+    m.map = ballTex(B); setMat(m, { c: 0xffffff, metal: B.metal, rough: B.rough, clear: B.clear }); m.needsUpdate = true;
+    if (old) old.dispose();
+    TYPE_COLORS[i] = PAL.fx[i];
+  });
+  setMat(PM.rim, PAL.rim); setMat(PM.plate, PAL.plate);
+  setMat(PM.gunBody, PAL.gun.body); setMat(PM.gunBarrel, PAL.gun.barrel); setMat(PM.gunDetail, PAL.gun.detail); setMat(PM.gunDark, PAL.gun.dark);
+  setMat(PM.rkFrame, PAL.racket.frame); setMat(PM.rkHandle, PAL.racket.handle); PM.rkStrings.color.setHex(PAL.racket.strings);
+  const raw = THREE.LinearSRGBColorSpace;   // los shaders propios usan el color tal cual (sin conversión)
+  PM.inside.uA.value.setHex(PAL.inside[0], raw); PM.inside.uB.value.setHex(PAL.inside[1], raw); PM.inside.uK.value = PAL.inside[2];
+  drawNet(netTex.image.getContext('2d'), netTex.image.width, netTex.image.height); netTex.needsUpdate = true; for (const t of netTexList) t.needsUpdate = true;
+  PAL.rings.forEach((c, i) => { RINGS[i][2] = c; });
+  drawDiana(dianaTex.image.getContext('2d'), dianaTex.image.width, dianaTex.image.height); dianaTex.needsUpdate = true;
+  const Q = PAL.q; matrixU.uBg.value.setHex(Q.bg, raw); matrixU.uTrace.value.setHex(Q.trace, raw); matrixU.uChip.value.setHex(Q.chip, raw);
+  matrixU.uGlow.value.setHex(Q.glow, raw); matrixU.uNode.value.setHex(Q.node, raw); matrixU.uPulse.value.setHex(Q.pulse, raw);
+  paintTower(); if (matrixPts) matrixPts.material.color.setHex(PAL.pts);
+  setMat(digiMat, PAL.digi); pullLine.material.color.setHex(PAL.accent);
+  HOW_BALL = PAL.how[0]; HOW_RK = PAL.how[1];
+  menuKey = '';
+}
 // ---------- Arranque ----------
 // En el navegador: botón «Empezar en RA». Como aplicación instalada (APK en modo inmersivo) la sesión
 // de RA se pide sola al abrir; si el sistema exige un gesto, queda el botón como respaldo.
@@ -2016,5 +2155,6 @@ async function check() {
 btn.addEventListener('click', () => startAR(false));
 window.__bolas = { menu, gun, ceilingAt, xrLog, hands, balls, rk, gest, lastThrows, hoops, bins, holes, debris, get score() { return score; }, get state() { return state; },
   get floorY() { return floorY; }, get ceilY() { return ceilY; }, get room() { return roomValid ? [roomMin.toArray(), roomMax.toArray()] : null; } };
+applyPalette(palKey);
 renderer.setAnimationLoop(loop);
 check();

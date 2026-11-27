@@ -6,7 +6,8 @@ y dos pelotas iguales se fusionan. Juntar los puños y separarlos saca o guarda 
 El gesto V (victoria) saca o guarda una pistola de juguete que dispara pelotas al doblar el índice (mandos: A/X y gatillo).
 Las pelotas caen desde encima del techo: el techo es permeable desde arriba y sólido desde abajo.
 Al mirar la palma abierta de la mano izquierda aparece un menú (se pulsa con el índice derecho): RESET (nueva partida),
-SCAN (volver a escanear la habitación) y MUTE (música ambiental). Estética grafito y cobre; detrás de las
+SCAN (volver a escanear la habitación) y MUTE (música ambiental); debajo, cuatro muestras para elegir la paleta de colores
+(Grafito y cobre, Monocromo, Joyas y Nórdico), que se recuerda entre partidas. Estética grafito y cobre; detrás de las
 paredes rotas hay un ordenador cuántico de fantasía en marfil, con circuitos grafito y pulsos de cobre.
 
 - Jugar en el navegador de la Quest: https://smussull.github.io/bolas-ra/
