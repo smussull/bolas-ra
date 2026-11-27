@@ -521,7 +521,7 @@ const _flipZ = new THREE.Matrix4().makeRotationZ(Math.PI);
 function rebuildColliders() {
   worldDirty = false;
   colPlanes = [...virtualPlanes];
-  let fy = Infinity, cy = -Infinity; const floorTriY = [];
+  let fy = Infinity, cy = -Infinity; const floorTriY = [], ceilTriY = [];
   for (const d of planes.values()) {
     const up = d.n.y > 0.8, down = d.n.y < -0.8, y = d.mat.elements[13];
     let mat = d.mat, inv = d.inv, n = d.n, poly = d.poly;
@@ -558,6 +558,7 @@ function rebuildColliders() {
       if (nl > 1e-12) { triN[k * 3] = nx / nl; triN[k * 3 + 1] = ny / nl; triN[k * 3 + 2] = nz / nl; }
       const cyT = (tris[o + 1] + tris[o + 4] + tris[o + 7]) / 3;
       if (nl > 1e-9 && Math.abs(ny / nl) > 0.95 && cyT < 0.4) floorTriY.push(cyT);
+      if (nl > 1e-9 && Math.abs(ny / nl) > 0.9 && cyT > 1.5) ceilTriY.push(cyT);
       for (let ix = Math.floor(mnx / CELL); ix <= Math.floor(mxx / CELL); ix++)
         for (let iy = Math.floor(mny / CELL); iy <= Math.floor(mxy / CELL); iy++)
           for (let iz = Math.floor(mnz / CELL); iz <= Math.floor(mxz / CELL); iz++) {
@@ -569,8 +570,14 @@ function rebuildColliders() {
   if (fy !== Infinity) floorY = fy > 0.6 ? 0 : fy;   // una malla de mesa no cuenta como suelo
   console.log('[bolas] suelo y =', floorY.toFixed(3), '· planos', planes.size, '· triángulos', nt);
   if (cy !== -Infinity) ceilY = cy;
-  else if (meshTop > floorY + 1.8) ceilY = Math.min(meshTop, floorY + 3.5);
-  else ceilY = floorY + 2.5;
+  else {
+    // sin plano de techo: el punto más alto de la malla puede ser ruido o un hueco alto. Se usa la
+    // superficie horizontal alta más baja que sea habitual (percentil 20 de los triángulos de techo).
+    const c = ceilTriY.filter(y => y > floorY + 1.8).sort((a, b) => a - b);
+    if (c.length > 10) ceilY = Math.min(c[Math.floor(c.length * 0.2)], floorY + 3.5);
+    else if (meshTop > floorY + 1.8) ceilY = Math.min(meshTop, floorY + 3.0);
+    else ceilY = floorY + 2.5;
+  }
   // caja de la habitación (seguridad anti-fugas): de la malla o de las paredes detectadas
   for (const d of planes.values()) if (Math.abs(d.n.y) < 0.3 && d.poly)
     for (let i = 0; i < d.poly.length; i += 2) { _v.set(d.poly[i], 0, d.poly[i + 1]).applyMatrix4(d.mat); roomMin.min(_v); roomMax.max(_v); }
@@ -649,6 +656,36 @@ function removeBall(b) {
 const drops = [];
 let nextDrop = Infinity;
 const ringGeo = new THREE.RingGeometry(0.05, 0.075, 40).rotateX(Math.PI / 2);
+// Rayo vertical hacia arriba desde (x, y0, z): altura de la primera superficie (techo, mueble alto…)
+function ceilingAt(x, y0, z) {
+  let best = Infinity;
+  for (const P of colPlanes) {                       // planos de techo (normal hacia abajo)
+    if (!P.down && P.label !== 'ceiling') continue;
+    const py = P.mat.elements[13]; if (py <= y0 || py >= best) continue;
+    _v.set(x, py, z).applyMatrix4(P.inv);
+    if (!P.poly || inPoly(P.poly, _v.x, _v.z)) best = py;
+  }
+  if (tris.length) {                                 // malla: triángulos de la columna (x, z)
+    const ix = Math.floor(x / CELL), iz = Math.floor(z / CELL);
+    stampId++;
+    for (let iy = Math.floor(y0 / CELL); iy <= Math.floor((floorY + 6) / CELL); iy++) {
+      if ((iy * CELL) > best) break;
+      const a = grid.get(cellKey(ix, iy, iz)); if (!a) continue;
+      for (const t of a) {
+        if (triStamp[t] === stampId) continue; triStamp[t] = stampId;
+        const o = t * 9, T = tris;
+        // intersección del rayo vertical con el triángulo (coordenadas baricéntricas en XZ)
+        const ax = T[o], az = T[o + 2], bx = T[o + 3], bz = T[o + 5], cx = T[o + 6], cz = T[o + 8];
+        const den = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz); if (Math.abs(den) < 1e-9) continue;
+        const u = ((bz - cz) * (x - cx) + (cx - bx) * (z - cz)) / den, v = ((cz - az) * (x - cx) + (ax - cx) * (z - cz)) / den, w = 1 - u - v;
+        if (u < 0 || v < 0 || w < 0) continue;
+        const y = u * T[o + 1] + v * T[o + 4] + w * T[o + 7];
+        if (y > y0 + 0.3 && y < best) best = y;
+      }
+    }
+  }
+  return best === Infinity ? ceilY : Math.min(best, ceilY + 0.5);
+}
 function dropPoint(head) {
   const floors = colPlanes.filter(p => p.up && p.poly && Math.abs(p.mat.elements[13] - floorY) < 0.15);
   for (let tries = 0; tries < 40; tries++) {
@@ -665,10 +702,11 @@ function dropPoint(head) {
     const hd = Math.hypot(x - head.x, z - head.z);
     if (hd > 2.6 || hd < 0.35) continue;
     if (roomValid && (x < roomMin.x + 0.15 || x > roomMax.x - 0.15 || z < roomMin.z + 0.15 || z > roomMax.z - 0.15)) continue;
-    return new THREE.Vector3(x, ceilY - 0.02, z);
+    return new THREE.Vector3(x, ceilingAt(x, head.y, z) - 0.02, z);
   }
   const a = rnd(0, Math.PI * 2), d = rnd(0.5, 1.5);
-  return new THREE.Vector3(head.x + Math.cos(a) * d, ceilY - 0.02, head.z + Math.sin(a) * d);
+  const fx = head.x + Math.cos(a) * d, fz = head.z + Math.sin(a) * d;
+  return new THREE.Vector3(fx, ceilingAt(fx, head.y, fz) - 0.02, fz);
 }
 function queueDrop(at, t) { drops.push({ at, t: t ?? Math.floor(Math.random() * TYPES.length), pos: null, ring: null }); }
 function updateDrops(head) {
@@ -681,7 +719,7 @@ function updateDrops(head) {
     }
     if (d.ring) { const k = 1 - Math.max(0, d.at - now) / 0.45; d.ring.scale.setScalar(0.3 + k); d.ring.material.opacity = 0.9 * (1 - k * 0.5); }
     if (now >= d.at && d.pos) {
-      const r = BALL_R * rnd(0.88, 1.12), p = d.pos.clone(); p.y = ceilY - r - 0.03;
+      const r = BALL_R * rnd(0.88, 1.12), p = d.pos.clone(); p.y = d.pos.y - r - 0.01;   // justo bajo el techo en ese punto
       makeBall(d.t, r, p, new THREE.Vector3(rnd(-0.2, 0.2), -0.3, rnd(-0.2, 0.2)));
       sndDrop(p); scene.remove(d.ring); d.ring.material.dispose(); drops.splice(i, 1);
     }
@@ -1699,7 +1737,7 @@ async function check() {
   else if (!ok) msg.textContent = 'Este navegador no parece admitir realidad mixta; puedes intentarlo igualmente.';
 }
 btn.addEventListener('click', () => startAR(false));
-window.__bolas = { xrLog, hands, balls, rk, gest, lastThrows, hoops, bins, holes, debris, get score() { return score; }, get state() { return state; },
+window.__bolas = { ceilingAt, xrLog, hands, balls, rk, gest, lastThrows, hoops, bins, holes, debris, get score() { return score; }, get state() { return state; },
   get floorY() { return floorY; }, get ceilY() { return ceilY; }, get room() { return roomValid ? [roomMin.toArray(), roomMax.toArray()] : null; } };
 renderer.setAnimationLoop(loop);
 check();
