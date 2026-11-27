@@ -404,35 +404,44 @@ function finger(g, pts, w0, w1, nail = true, side = 1) {
     g.restore();
   }
 }
-// mano de perfil (lado del pulgar): (px, py) = punta de la pinza; k = apertura (0 cerrada, 1 abierta)
+// mano de perfil (lado del pulgar) con proporciones reales: palma ≈ 70 px, índice ≈ 76 px (falanges 34 · 23 · 19),
+// dedos finos que se estrechan, base del pulgar abultada. (px, py) = punta de la pinza; k = apertura (0 cerrada, 1 abierta)
 function pinchHand(g, px, py, k) {
-  // antebrazo que se estrecha hacia la muñeca (contorno abierto, como en un grabado)
-  const top = [[px - 300, py + 80], [px - 230, py + 50], [px - 175, py + 30], [px - 148, py + 24]];
-  const bot = [[px - 150, py + 62], [px - 185, py + 78], [px - 245, py + 110], [px - 300, py + 140]];
+  g.save(); g.translate(px, py); g.scale(1.15, 1.15); g.translate(-px, -py);   // algo más grande en la tarjeta
+  const L = (a, b) => a + (b - a) * k;
+  // antebrazo: estrecho en la muñeca (≈ 32 px de grosor) y ensanchándose hacia el codo
+  const top = [[px - 300, py + 64], [px - 240, py + 44], [px - 190, py + 30], [px - 152, py + 27]];
+  const bot = [[px - 150, py + 59], [px - 190, py + 70], [px - 245, py + 100], [px - 300, py + 126]];
   const arm = () => { g.moveTo(...top[0]); g.bezierCurveTo(...top[1], ...top[2], ...top[3]); g.lineTo(...bot[0]); g.bezierCurveTo(...bot[1], ...bot[2], ...bot[3]); g.closePath(); };
   g.beginPath(); arm(); g.fillStyle = '#fff'; g.fill();
-  hatch(g, [arm, () => { g.ellipse(px - 230, py + 112, 95, 20, -0.42, 0, 7); }], -2.25, 2.8, [px - 300, py, px - 140, py + 150]);
-  g.strokeStyle = ENG; g.lineWidth = 1.9;
+  hatch(g, [arm, () => { g.ellipse(px - 235, py + 102, 95, 16, -0.4, 0, 7); }], -2.25, 2.5, [px - 300, py, px - 140, py + 140], 0.8);
+  g.strokeStyle = ENG; g.lineWidth = 1.7;
   g.beginPath(); g.moveTo(...top[0]); g.bezierCurveTo(...top[1], ...top[2], ...top[3]); g.stroke();
   g.beginPath(); g.moveTo(...bot[0]); g.bezierCurveTo(...bot[1], ...bot[2], ...bot[3]); g.stroke();
-  g.strokeStyle = 'rgba(29,29,31,0.45)'; g.lineWidth = 1;                     // músculos del antebrazo
-  g.beginPath(); g.moveTo(px - 290, py + 100); g.quadraticCurveTo(px - 230, py + 72, px - 170, py + 48); g.stroke();
-  // dorso y palma: forma orgánica; sin trazo en el lado de la muñeca para que se una al brazo
-  const palm = () => { g.moveTo(px - 150, py + 24); g.bezierCurveTo(px - 122, py - 6, px - 96, py - 14, px - 70, py - 8);
-    g.bezierCurveTo(px - 60, py - 2, px - 58, py + 8, px - 62, py + 16); g.bezierCurveTo(px - 70, py + 44, px - 92, py + 64, px - 122, py + 68);
-    g.bezierCurveTo(px - 136, py + 69, px - 146, py + 66, px - 152, py + 60); g.closePath(); };
+  g.strokeStyle = 'rgba(29,29,31,0.4)'; g.lineWidth = 0.9;                    // músculos y hueso de la muñeca
+  g.beginPath(); g.moveTo(px - 292, py + 92); g.quadraticCurveTo(px - 235, py + 66, px - 172, py + 46); g.stroke();
+  g.beginPath(); g.arc(px - 150, py + 30, 5, Math.PI * 0.9, Math.PI * 1.9); g.stroke();
+  // dorso y palma: dorso casi recto hasta los nudillos; por debajo, la eminencia tenar abultada
+  const palm = () => { g.moveTo(px - 152, py + 27); g.bezierCurveTo(px - 130, py + 10, px - 108, py - 2, px - 86, py - 3);
+    g.bezierCurveTo(px - 74, py - 2, px - 68, py + 10, px - 70, py + 22); g.bezierCurveTo(px - 76, py + 42, px - 96, py + 62, px - 122, py + 66);
+    g.bezierCurveTo(px - 136, py + 66, px - 145, py + 63, px - 150, py + 59); g.closePath(); };
   g.beginPath(); palm(); g.fillStyle = '#fff'; g.fill();
-  hatch(g, [palm, () => { g.ellipse(px - 104, py + 60, 58, 17, -0.2, 0, 7); }], -2.3, 2.5, [px - 160, py - 20, px - 55, py + 75]);
-  g.strokeStyle = ENG; g.lineWidth = 1.9;
-  g.beginPath(); g.moveTo(px - 150, py + 24); g.bezierCurveTo(px - 122, py - 6, px - 96, py - 14, px - 70, py - 8); g.stroke();
-  g.beginPath(); g.moveTo(px - 62, py + 16); g.bezierCurveTo(px - 70, py + 44, px - 92, py + 64, px - 122, py + 68); g.bezierCurveTo(px - 136, py + 69, px - 146, py + 66, px - 152, py + 60); g.stroke();
-  g.strokeStyle = 'rgba(29,29,31,0.5)'; g.lineWidth = 1.1;                    // tendones del dorso
-  for (const [y0, y1] of [[16, 0], [26, 10]]) { g.beginPath(); g.moveTo(px - 140, py + y0); g.quadraticCurveTo(px - 108, py + y0 - 12, px - 80, py + y1); g.stroke(); }
-  for (let i = 2; i >= 0; i--)                                                 // corazón, anular y meñique doblados
-    finger(g, [[px - 78 - i * 3, py + 12 + i * 12], [px - 56 - i * 3, py + 16 + i * 12], [px - 50 - i * 3, py + 30 + i * 10], [px - 60 - i * 3, py + 39 + i * 8]], 15 - i, 12 - i, true, 1);
-  finger(g, [[px - 76, py - 2], [px - 48, py - 6 - 10 * k], [px - 24, py - 9 - 20 * k], [px - 5, py - 8 - 30 * k]], 18, 12, true, 1);     // índice
-  // pulgar: grueso en la base (eminencia tenar) y afinándose con una curva hasta la punta
-  finger(g, [[px - 136, py + 56], [px - 104, py + 62], [px - 70, py + 56 + 4 * k], [px - 40, py + 40 + 12 * k], [px - 9, py + 14 + 26 * k]], 28, 15, true, -1);
+  hatch(g, [palm, () => { g.ellipse(px - 110, py + 58, 50, 14, -0.25, 0, 7); }], -2.3, 2.3, [px - 160, py - 5, px - 65, py + 70], 0.8);
+  g.strokeStyle = ENG; g.lineWidth = 1.7;
+  g.beginPath(); g.moveTo(px - 152, py + 27); g.bezierCurveTo(px - 130, py + 10, px - 108, py - 2, px - 86, py - 3); g.stroke();
+  g.beginPath(); g.moveTo(px - 70, py + 22); g.bezierCurveTo(px - 76, py + 42, px - 96, py + 62, px - 122, py + 66); g.bezierCurveTo(px - 136, py + 66, px - 145, py + 63, px - 150, py + 59); g.stroke();
+  g.strokeStyle = 'rgba(29,29,31,0.45)'; g.lineWidth = 0.9;                   // tendones del dorso
+  for (const [y0, y1] of [[24, 8], [31, 14]]) { g.beginPath(); g.moveTo(px - 142, py + y0); g.quadraticCurveTo(px - 112, py + y0 - 10, px - 88, py + y1); g.stroke(); }
+  // corazón, anular y meñique doblados, asomando por debajo del índice (del más lejano al más cercano)
+  for (let i = 2; i >= 0; i--) {
+    const o = i * 5;
+    finger(g, [[px - 88 - o, py + 14 + o], [px - 60 - o, py + 18 + o], [px - 48 - o, py + 28 + o * 0.8], [px - 53 - o, py + 36 + o * 0.6]], 13.5 - i, 10.5 - i * 0.7, false, 1);
+  }
+  // índice: tres falanges con su curva natural
+  finger(g, [[px - 86, py + 7], [px - 52, py + L(4, -3)], [px - 29, py + L(5, -13)], [px - 9, py + L(8, -26)]], 13.5, 9.5, true, 1);
+  // pulgar: metacarpiano grueso desde la muñeca, dos falanges y uña
+  finger(g, [[px - 140, py + 54], [px - 108, py + 53], [px - 74, py + L(42, 46)], [px - 40, py + L(27, 35)], [px - 11, py + L(14, 38)]], 22, 12, true, -1);
+  g.restore();
 }
 function drawGrab(g, t) {
   const B = [250, 210];
@@ -483,9 +492,10 @@ function fist(g, cx, cy, sd, a = 1) {
   hatch(g, [hand, () => { g.ellipse(cx + sd * 30, cy + 22, 20, 34, 0, 0, 7); }], -2.1, 2.5, [cx - 48, cy - 32, cx + 48, cy + 46]);
   g.beginPath(); hand(); g.strokeStyle = ENG; g.lineWidth = 1.9; g.stroke();
   // dedos plegados: falange media, con el corazón algo más alto
-  const H = [30, 36, 34, 27], X = [-29, -10, 10, 28], T = [-28, -34, -33, -25];
+  // índice, corazón, anular, meñique (de fuera a dentro según la mano): anchuras y alturas reales
+  const H = [31, 36, 34, 26], X = [-29, -10, 9.5, 27], T = [-27, -34, -32, -23], Wd = [19, 19.5, 18, 15];
   for (let i = 0; i < 4; i++) {
-    const x = cx + X[i], top = cy + T[i], h = H[i], w = i === 3 ? 17 : 19.5;
+    const f = sd > 0 ? i : 3 - i, x = cx + X[i], top = cy + T[f], h = H[f], w = Wd[f];   // el índice queda junto al pulgar
     const seg = () => { g.roundRect(x - w / 2, top, w, h, w * 0.48); };
     g.beginPath(); seg(); g.fillStyle = '#fff'; g.fill();
     hatch(g, [seg, () => { g.rect(x + w * 0.15, top, w * 0.4, h); }], -2.0, 2.3, [x - 12, top, x + 12, top + h]);
@@ -495,7 +505,8 @@ function fist(g, cx, cy, sd, a = 1) {
     g.beginPath(); g.arc(x, top + 6, w * 0.26, Math.PI * 1.15, Math.PI * 1.85); g.stroke();                                               // nudillo
   }
   // pulgar cruzado por delante, curvado y afinándose
-  finger(g, [[cx - sd * 44, cy + 34], [cx - sd * 26, cy + 22], [cx - sd * 4, cy + 12], [cx + sd * 16, cy + 6]], 26, 16, true, sd > 0 ? 1 : -1);
+  // pulgar: sale de abajo por el lado exterior y cruza en diagonal sobre la falange media del índice y el corazón
+  finger(g, [[cx - sd * 48, cy + 40], [cx - sd * 32, cy + 26], [cx - sd * 12, cy + 12], [cx + sd * 8, cy + 2]], 23, 14, true, sd > 0 ? 1 : -1);
   g.globalAlpha = 1;
 }
 function racketPic(g, cx, cy, sc) {
