@@ -354,108 +354,20 @@ function ball(g, x, y, r, a = 1) {
   g.globalAlpha = 1;
 }
 // mano de perfil: (px, py) = punta de la pinza; k = apertura (0 cerrada, 1 abierta)
-// ---- manos en estilo grabado: contorno negro sobre blanco y sombras con tramado fino ----
-const ENG = '#1d1d1f';
-// tramado de líneas paralelas dentro de la intersección de varios recortes
-function hatch(g, clips, ang, gap, bbox, lw = 0.9, alpha = 0.85) {
-  g.save();
-  for (const f of clips) { g.beginPath(); f(); g.clip(); }
-  g.strokeStyle = `rgba(29,29,31,${alpha})`; g.lineWidth = lw;
-  const [x0, y0, x1, y1] = bbox, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, R = Math.hypot(x1 - x0, y1 - y0) / 2 + 4;
-  const dx = Math.cos(ang), dy = Math.sin(ang), nx = -dy, ny = dx;
-  for (let t = -R; t <= R; t += gap) { g.beginPath(); g.moveTo(cx + nx * t - dx * R, cy + ny * t - dy * R); g.lineTo(cx + nx * t + dx * R, cy + ny * t + dy * R); g.stroke(); }
-  g.restore();
+// ---- manos del tutorial: imágenes de referencia (línea y tramado, fondo transparente) en img/ ----
+const HOW_IMG = { pinza: new Image(), izq: new Image(), der: new Image() };
+HOW_IMG.pinza.src = 'img/mano-pinza.png'; HOW_IMG.izq.src = 'img/puno-izq.png'; HOW_IMG.der.src = 'img/puno-der.png';
+const PINZA = { w: 760, h: 621, bx: 688.5, by: 283.9, br: 62.1 };   // centro y radio del hueco de la pinza en la imagen
+const PUNO = { w: 276, h: 520 };
+// mano con la pinza: (x, y) = centro del hueco entre índice y pulgar; r = radio de la bola que cabe
+function pinchImg(g, x, y, r) {
+  const im = HOW_IMG.pinza; if (!im.complete || !im.naturalWidth) return;
+  const s = r / PINZA.br; g.drawImage(im, x - PINZA.bx * s, y - PINZA.by * s, PINZA.w * s, PINZA.h * s);
 }
-function polyPath(g, P) { g.moveTo(P[0][0], P[0][1]); for (let i = 1; i < P.length; i++) g.lineTo(P[i][0], P[i][1]); g.closePath(); }
-// dedo: contorno suave por sus articulaciones, banda de sombra tramada en un lado, pliegues y uña
-function finger(g, pts, w0, w1, nail = true, side = 1) {
-  const n = pts.length, L = [], R = [], dirs = [];
-  for (let i = 0; i < n; i++) {
-    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)];
-    let dx = b[0] - a[0], dy = b[1] - a[1]; const l = Math.hypot(dx, dy) || 1; dx /= l; dy /= l; dirs.push([dx, dy]);
-    const w = (w0 + (w1 - w0) * i / (n - 1)) / 2;
-    L.push([pts[i][0] - dy * w, pts[i][1] + dx * w]); R.push([pts[i][0] + dy * w, pts[i][1] - dx * w]);
-  }
-  const t = pts[n - 1], p = pts[n - 2], ang = Math.atan2(t[1] - p[1], t[0] - p[0]);
-  const path = (close = true) => {
-    g.moveTo(L[0][0], L[0][1]);
-    for (let i = 1; i < n; i++) { const m = [(L[i - 1][0] + L[i][0]) / 2, (L[i - 1][1] + L[i][1]) / 2]; g.quadraticCurveTo(L[i - 1][0], L[i - 1][1], m[0], m[1]); }
-    g.lineTo(L[n - 1][0], L[n - 1][1]);
-    g.arc(t[0], t[1], w1 / 2, ang + Math.PI / 2, ang - Math.PI / 2, true);
-    for (let i = n - 2; i >= 0; i--) { const m = [(R[i + 1][0] + R[i][0]) / 2, (R[i + 1][1] + R[i][1]) / 2]; g.quadraticCurveTo(R[i + 1][0], R[i + 1][1], m[0], m[1]); }
-    g.lineTo(R[0][0], R[0][1]); if (close) g.closePath();
-  };
-  g.beginPath(); path(); g.fillStyle = '#ffffff'; g.fill();
-  // banda de sombra a lo largo del lado en sombra (side 1 = lado R)
-  const E = side > 0 ? R : L, band = [...E, ...pts.map((q, i) => [q[0] + (E[i][0] - q[0]) * 0.15, q[1] + (E[i][1] - q[1]) * 0.15]).reverse()];
-  const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]), bb = [Math.min(...xs) - w0, Math.min(...ys) - w0, Math.max(...xs) + w0, Math.max(...ys) + w0];
-  hatch(g, [path, () => polyPath(g, band)], ang + Math.PI / 2.6, 2.6, bb);
-  g.beginPath(); path(false); g.strokeStyle = ENG; g.lineWidth = 1.9; g.lineJoin = 'round'; g.stroke();   // sin trazo en la base: se funde con la palma
-  g.strokeStyle = 'rgba(29,29,31,0.7)'; g.lineWidth = 1.2;                    // pliegues de las articulaciones
-  for (let i = 1; i < n - 1; i++) {
-    const [dx, dy] = dirs[i], w = (w0 + (w1 - w0) * i / (n - 1)) * 0.28;
-    g.beginPath(); g.moveTo(pts[i][0] - dy * w, pts[i][1] + dx * w); g.quadraticCurveTo(pts[i][0] + dx * 2.5, pts[i][1] + dy * 2.5, pts[i][0] + dy * w * 0.4, pts[i][1] - dx * w * 0.4); g.stroke();
-  }
-  if (nail) {                                                                  // uña con su lúnula
-    g.save(); g.translate(t[0] - Math.cos(ang) * w1 * 0.3, t[1] - Math.sin(ang) * w1 * 0.3); g.rotate(ang);
-    g.strokeStyle = ENG; g.lineWidth = 1.3;
-    g.beginPath(); g.moveTo(-w1 * 0.36, -w1 * 0.3); g.quadraticCurveTo(w1 * 0.42, -w1 * 0.36, w1 * 0.42, 0); g.quadraticCurveTo(w1 * 0.42, w1 * 0.36, -w1 * 0.36, w1 * 0.3);
-    g.quadraticCurveTo(-w1 * 0.46, 0, -w1 * 0.36, -w1 * 0.3); g.stroke();
-    g.restore();
-  }
-}
-// ---- manos en silueta: forma oscura con líneas claras finas que separan dedos y uñas ----
-const SIL = '#2b2e35', SIL_LINE = 'rgba(255,255,255,0.9)';
-// dedo en silueta: relleno oscuro, contorno claro abierto en la base y uña
-function silFinger(g, pts, w0, w1, nail = true, line = true) {
-  const n = pts.length, L = [], R = [];
-  for (let i = 0; i < n; i++) {
-    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)];
-    let dx = b[0] - a[0], dy = b[1] - a[1]; const l = Math.hypot(dx, dy) || 1; dx /= l; dy /= l;
-    const w = (w0 + (w1 - w0) * i / (n - 1)) / 2;
-    L.push([pts[i][0] - dy * w, pts[i][1] + dx * w]); R.push([pts[i][0] + dy * w, pts[i][1] - dx * w]);
-  }
-  const t = pts[n - 1], p = pts[n - 2], ang = Math.atan2(t[1] - p[1], t[0] - p[0]);
-  const path = close => {
-    g.moveTo(L[0][0], L[0][1]);
-    for (let i = 1; i < n; i++) { const m = [(L[i - 1][0] + L[i][0]) / 2, (L[i - 1][1] + L[i][1]) / 2]; g.quadraticCurveTo(L[i - 1][0], L[i - 1][1], m[0], m[1]); }
-    g.lineTo(L[n - 1][0], L[n - 1][1]); g.arc(t[0], t[1], w1 / 2, ang + Math.PI / 2, ang - Math.PI / 2, true);
-    for (let i = n - 2; i >= 0; i--) { const m = [(R[i + 1][0] + R[i][0]) / 2, (R[i + 1][1] + R[i][1]) / 2]; g.quadraticCurveTo(R[i + 1][0], R[i + 1][1], m[0], m[1]); }
-    g.lineTo(R[0][0], R[0][1]); if (close) g.closePath();
-  };
-  g.beginPath(); path(true); g.fillStyle = SIL; g.fill();
-  if (line) { g.beginPath(); path(false); g.strokeStyle = SIL_LINE; g.lineWidth = 1.5; g.lineJoin = 'round'; g.stroke(); }
-  if (nail) {
-    g.save(); g.translate(t[0] - Math.cos(ang) * w1 * 0.28, t[1] - Math.sin(ang) * w1 * 0.28); g.rotate(ang);
-    g.strokeStyle = SIL_LINE; g.lineWidth = 1.3;
-    g.beginPath(); g.moveTo(-w1 * 0.3, -w1 * 0.3); g.quadraticCurveTo(w1 * 0.42, -w1 * 0.34, w1 * 0.42, 0); g.quadraticCurveTo(w1 * 0.42, w1 * 0.34, -w1 * 0.3, w1 * 0.3); g.stroke();
-    g.restore();
-  }
-}
-// mano sujetando la bola con la pinza (índice arriba, pulgar abajo, formando un anillo) y los otros tres
-// dedos estirados hacia arriba. (px, py) = punto de pinza; la bola cogida está en (px + 24, py).
-// k = apertura (0 cerrada sobre la bola, 1 abierta)
-function pinchHand(g, px, py, k) {
-  const cx = px + 24, cy = py, L = (a, b) => a + (b - a) * k;
-  // antebrazo que entra desde abajo a la izquierda
-  g.beginPath(); g.moveTo(cx - 150, cy + 34); g.bezierCurveTo(cx - 175, cy + 70, cx - 205, cy + 110, cx - 240, cy + 160);
-  g.lineTo(cx - 170, cy + 175); g.bezierCurveTo(cx - 150, cy + 130, cx - 128, cy + 96, cx - 108, cy + 72); g.closePath();
-  g.fillStyle = SIL; g.fill();
-  // meñique, anular y corazón estirados hacia arriba, ligeramente abiertos en abanico
-  silFinger(g, [[cx - 110, cy - 30], [cx - 114, cy - 62], [cx - 115, cy - 82], [cx - 115, cy - 96]], 17, 12.5);
-  silFinger(g, [[cx - 95, cy - 40], [cx - 88, cy - 82], [cx - 82, cy - 106], [cx - 77, cy - 121]], 19, 13.5);
-  silFinger(g, [[cx - 80, cy - 44], [cx - 63, cy - 88], [cx - 52, cy - 112], [cx - 42, cy - 127]], 19.5, 14);
-  // palma (cubre la base de los dedos de atrás)
-  g.beginPath(); g.moveTo(cx - 118, cy - 30); g.bezierCurveTo(cx - 104, cy - 44, cx - 86, cy - 52, cx - 70, cy - 50);
-  g.bezierCurveTo(cx - 52, cy - 40, cx - 46, cy - 20, cx - 52, cy - 2); g.bezierCurveTo(cx - 60, cy + 22, cx - 76, cy + 50, cx - 100, cy + 76);
-  g.lineTo(cx - 150, cy + 40); g.bezierCurveTo(cx - 140, cy + 10, cx - 130, cy - 14, cx - 118, cy - 30); g.closePath();
-  g.fillStyle = SIL; g.fill();
-  g.strokeStyle = SIL_LINE; g.lineWidth = 1.3;                                  // pliegue de la palma bajo los dedos
-  g.beginPath(); g.moveTo(cx - 112, cy - 30); g.quadraticCurveTo(cx - 92, cy - 40, cx - 70, cy - 36); g.stroke();
-  // índice: sale del nudillo, sube y baja en curva hasta apoyar la yema encima de la bola
-  silFinger(g, [[cx - 66, cy - 36], [cx - 38, cy - L(50, 62)], [cx - 14, cy - L(46, 66)], [cx + 2, cy - L(31, 60)]], 19, 13.5);
-  // pulgar: fino, desde la base de la palma por debajo de la bola hasta tocarla
-  silFinger(g, [[cx - 92, cy + 48], [cx - 58, cy + 39], [cx - 30, cy + L(32, 48)], [cx - 8, cy + L(25, 50)]], 18, 12);
+// puño: (cx) = centro horizontal, (top) = altura de los nudillos, w = anchura dibujada
+function fistImg(g, im, cx, top, w) {
+  if (!im.complete || !im.naturalWidth) return;
+  const s = w / PUNO.w; g.drawImage(im, cx - w / 2, top, w, PUNO.h * s);
 }
 function drawGrab(g, t) {
   const B = [250, 210];
@@ -479,31 +391,11 @@ function drawGrab(g, t) {
     ball(g, fx, fy, 24, 1 - fly * 0.4);
   }
   if (gone && t > 3.25) ball(g, B[0], B[1], 24 * reappear, reappear);
-  pinchHand(g, px, py, k);
+  pinchImg(g, px + 24, py, 24);   // la bola cogida queda en el hueco entre índice y pulgar
   if (t > 0.95 && t < 1.35) {                                                     // destello de la pinza
     g.strokeStyle = 'rgba(255,170,0,0.9)'; g.lineWidth = 5;
     for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; g.beginPath(); g.moveTo(B[0] + Math.cos(a) * 34, B[1] + Math.sin(a) * 34); g.lineTo(B[0] + Math.cos(a) * 46, B[1] + Math.sin(a) * 46); g.stroke(); }
   }
-}
-// puño de frente (sd = -1 izquierdo, 1 derecho)
-// puño de frente en silueta: nudillos en arco, dedos plegados con líneas claras y pulgar fino (sd = -1 izq., 1 der.)
-function fist(g, cx, cy, sd, a = 1) {
-  g.globalAlpha = a;
-  g.beginPath(); g.moveTo(cx - 22, cy + 36); g.bezierCurveTo(cx - 26 + sd * 3, cy + 90, cx - 30 + sd * 8, cy + 130, cx - 32 + sd * 12, cy + 175);   // antebrazo
-  g.lineTo(cx + 34 + sd * 12, cy + 175); g.bezierCurveTo(cx + 32 + sd * 8, cy + 130, cx + 28 + sd * 3, cy + 90, cx + 24, cy + 36); g.closePath();
-  g.fillStyle = SIL; g.fill();
-  g.beginPath(); g.moveTo(cx - 40, cy - 14); g.quadraticCurveTo(cx, cy - 30, cx + 40, cy - 14);                                                        // mano
-  g.bezierCurveTo(cx + 46, cy + 10, cx + 36, cy + 34, cx + 25, cy + 44); g.lineTo(cx - 23, cy + 44); g.bezierCurveTo(cx - 36, cy + 34, cx - 46, cy + 10, cx - 40, cy - 14); g.closePath();
-  g.fillStyle = SIL; g.fill();
-  const H = [31, 36, 34, 26], X = [-29, -10, 9.5, 27], T = [-27, -34, -32, -23], Wd = [19, 19.5, 18, 15];
-  for (let i = 0; i < 4; i++) {                                                 // dedos plegados, separados por líneas claras
-    const f = sd > 0 ? i : 3 - i, x = cx + X[i], top = cy + T[f], h = H[f], w = Wd[f];
-    g.beginPath(); g.roundRect(x - w / 2, top, w, h, w * 0.48); g.fillStyle = SIL; g.fill(); g.strokeStyle = SIL_LINE; g.lineWidth = 1.4; g.stroke();
-    g.beginPath(); g.moveTo(x - w * 0.28, top + h * 0.6); g.quadraticCurveTo(x, top + h * 0.67, x + w * 0.26, top + h * 0.6); g.lineWidth = 1.1; g.stroke();
-  }
-  // pulgar fino que cruza en diagonal sobre el índice y el corazón
-  silFinger(g, [[cx - sd * 46, cy + 40], [cx - sd * 30, cy + 26], [cx - sd * 12, cy + 13], [cx + sd * 6, cy + 4]], 16, 10.5);
-  g.globalAlpha = 1;
 }
 function racketPic(g, cx, cy, sc) {
   if (sc <= 0.01) return;
@@ -536,12 +428,12 @@ function drawRacketDemo(g, t) {
     g.beginPath(); g.moveTo(lx + 40, y - 10); g.lineTo(rx - 40, y - 10); g.stroke(); g.restore();
   }
   const show = seg(t, 1.45, 1.75) * (1 - seg(t, 3.7, 4.0));
-  racketPic(g, rx, y, show);
+  racketPic(g, rx, y - 4, show);   // el mango sale de los nudillos
   if (t > 3.7 && t < 4.2) {                                                       // "puf" al guardarla
     const k = seg(t, 3.7, 4.2); g.fillStyle = `rgba(23,184,255,${0.5 * (1 - k)})`;
     for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2; g.beginPath(); g.arc(rx + Math.cos(a) * 60 * k, y - 160 + Math.sin(a) * 60 * k, 9 * (1 - k) + 2, 0, 7); g.fill(); }
   }
-  fist(g, lx, y, -1); fist(g, rx, y, 1);
+  fistImg(g, HOW_IMG.izq, lx, y - 40, 92); fistImg(g, HOW_IMG.der, rx, y - 40, 92);
   flash(g, 200, y - 5, (t - 0.75) / 0.35); flash(g, 200, y - 5, (t - 3.45) / 0.35);
 }
 const howto = makePanel(0.62, 0.3);

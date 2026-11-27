@@ -1,8 +1,9 @@
 // Service worker: guarda todos los archivos del juego para que funcione sin internet.
 // Al cambiar cualquier archivo del juego, sube la versión para que las gafas descarguen la nueva.
-const VERSION = 'bolas-ra-v12';
+const VERSION = 'bolas-ra-v13';
 const FILES = ['./', 'index.html', 'main.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png',
-  'vendor/three/three.module.js', 'vendor/three/addons/environments/RoomEnvironment.js'];
+  'vendor/three/three.module.js', 'vendor/three/addons/environments/RoomEnvironment.js',
+  'img/mano-pinza.png', 'img/puno-izq.png', 'img/puno-der.png'];
 const NET_TIMEOUT = 2500;   // ms: si la red no contesta (wifi sin internet), se usa la copia guardada
 
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES))); self.skipWaiting(); });
