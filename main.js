@@ -48,7 +48,7 @@ scene.add(new THREE.HemisphereLight(0xffffff, 0x5a6270, 1.0));
 const sun = new THREE.DirectionalLight(0xffffff, 1.1); sun.position.set(1, 3, 1.5); scene.add(sun);
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-scene.environmentIntensity = 0.6;   // reflejos suaves
+scene.environmentIntensity = 0.85;  // reflejos para el cobre y el acero
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 
 // ---------- Texturas de las bolas ----------
@@ -60,47 +60,47 @@ function canvasTex(draw, w = 512, h = 256) {
 }
 const rnd = (a, b) => a + Math.random() * (b - a);
 
-// Paleta minimalista: blancos, grises claros y pastel. Cada tipo tiene un dibujo suave para ver el giro.
-const texRosa = canvasTex((g, w, h) => {
-  g.fillStyle = '#f7c9d3'; g.fillRect(0, 0, w, h);
-  g.fillStyle = '#fbfbfc'; g.fillRect(0, h * 0.45, w, h * 0.1);
-  g.fillStyle = '#efb0c0'; g.fillRect(0, h * 0.24, w, h * 0.035); g.fillRect(0, h * 0.725, w, h * 0.035);
+// Paleta "grafito y cobre": sobria y elegante. Cada tipo tiene su material y un dibujo sutil para ver el giro.
+const texGrafito = canvasTex((g, w, h) => {
+  g.fillStyle = '#2b2d31'; g.fillRect(0, 0, w, h); g.strokeStyle = '#3d4046'; g.lineWidth = 6;
+  for (let y = h / 8; y < h; y += h / 4) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
 });
-const texMenta = canvasTex((g, w, h) => {
-  g.fillStyle = '#c4ecdc'; g.fillRect(0, 0, w, h); g.fillStyle = '#f7fbf9';
-  for (let i = 0; i < 8; i++) for (let j = 0; j < 4; j++) { g.beginPath(); g.arc((i + (j % 2) * 0.5) * w / 8, (j + 0.5) * h / 4, 13, 0, 7); g.fill(); }
+const texCeramica = canvasTex((g, w, h) => {
+  g.fillStyle = '#ece9e4'; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#d3cec6'; g.fillRect(0, h * 0.47, w, h * 0.06);
 });
-const texLavanda = canvasTex((g, w, h) => {
-  g.fillStyle = '#dcd3f3'; g.fillRect(0, 0, w, h); g.strokeStyle = '#c3b5eb'; g.lineWidth = 9;
-  for (let k = 0; k < 6; k++) { g.beginPath(); for (let x = 0; x <= w; x += 6) { const y = h * (k + 0.5) / 6 + Math.sin(x / w * Math.PI * 4 + k) * 9; x ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); }
+const texCobre = canvasTex((g, w, h) => {
+  g.fillStyle = '#b87333'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(${Math.random() < .5 ? '255,220,180' : '90,45,15'},${rnd(.04, .12)})`; g.fillRect(rnd(0, w), rnd(0, h), rnd(30, 120), 1); }
+  g.fillStyle = 'rgba(70,35,10,.35)'; g.fillRect(0, h * 0.49, w, 3);
 });
-const texCielo = canvasTex((g, w, h) => {
-  g.fillStyle = '#c8e0f7'; g.fillRect(0, 0, w, h); g.fillStyle = '#f5f9fd';
-  for (let i = 0; i < 8; i++) for (let j = 0; j < 4; j++) if ((i + j) % 2) g.fillRect(i * w / 8, j * h / 4, w / 8, h / 4);
+const texAcero = canvasTex((g, w, h) => {
+  g.fillStyle = '#8a8f96'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(${Math.random() < .5 ? '255,255,255' : '40,45,50'},${rnd(.04, .1)})`; g.fillRect(rnd(0, w), rnd(0, h), rnd(30, 120), 1); }
+  g.strokeStyle = 'rgba(40,45,50,.45)'; g.lineWidth = 3;
+  for (const x of [w * 0.25, w * 0.75]) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
 });
-const texCrema = canvasTex((g, w, h) => {
-  g.fillStyle = '#f7e6ad'; g.fillRect(0, 0, w, h);
-  g.strokeStyle = '#fffaf0'; g.lineWidth = 10; g.beginPath();
-  for (let x = 0; x <= w; x += 4) { const y = h / 2 + Math.sin(x / w * Math.PI * 4) * h * 0.28; x ? g.lineTo(x, y) : g.moveTo(x, y); }
+const texPizarra = canvasTex((g, w, h) => {
+  g.fillStyle = '#5b6670'; g.fillRect(0, 0, w, h); g.fillStyle = '#6d7882';
+  for (let i = 0; i < 8; i++) for (let j = 0; j < 4; j++) { g.beginPath(); g.arc((i + (j % 2) * 0.5) * w / 8, (j + 0.5) * h / 4, 9, 0, 7); g.fill(); }
+});
+const texArena = canvasTex((g, w, h) => {
+  g.fillStyle = '#c9b79c'; g.fillRect(0, 0, w, h);
+  g.strokeStyle = '#e0d4c0'; g.lineWidth = 7; g.beginPath();
+  for (let x = 0; x <= w; x += 4) { const y = h / 2 + Math.sin(x / w * Math.PI * 4) * h * 0.26; x ? g.lineTo(x, y) : g.moveTo(x, y); }
   g.stroke();
 });
-const texPerla = canvasTex((g, w, h) => {
-  g.fillStyle = '#eef1f4'; g.fillRect(0, 0, w, h); g.strokeStyle = '#d3d9e0'; g.lineWidth = 4;
-  for (let x = 0; x < w; x += w / 8) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
-  g.beginPath(); g.moveTo(0, h / 2); g.lineTo(w, h / 2); g.stroke();
-});
 // Todas son pelotas de goma ligera; cambian el aspecto y el tono del bote
-const pastel = (map, extra = {}) => new THREE.MeshStandardMaterial({ map, roughness: 0.6, envMapIntensity: 0.5, ...extra });
 const TYPES = [
-  { name: 'Rosa',     snd: 190, mat: pastel(texRosa) },
-  { name: 'Menta',    snd: 230, mat: pastel(texMenta) },
-  { name: 'Lavanda',  snd: 165, mat: pastel(texLavanda) },
-  { name: 'Cielo',    snd: 260, mat: pastel(texCielo) },
-  { name: 'Crema',    snd: 300, mat: pastel(texCrema) },
-  { name: 'Perla',    snd: 340, mat: new THREE.MeshPhysicalMaterial({ map: texPerla, roughness: 0.3, clearcoat: 0.6, clearcoatRoughness: 0.3, envMapIntensity: 0.6 }) },
+  { name: 'Grafito',  snd: 190, mat: new THREE.MeshStandardMaterial({ map: texGrafito, roughness: 0.7 }) },
+  { name: 'Cerámica', snd: 230, mat: new THREE.MeshPhysicalMaterial({ map: texCeramica, roughness: 0.25, clearcoat: 0.8, clearcoatRoughness: 0.2 }) },
+  { name: 'Cobre',    snd: 165, mat: new THREE.MeshStandardMaterial({ map: texCobre, metalness: 0.85, roughness: 0.32 }) },
+  { name: 'Acero',    snd: 260, mat: new THREE.MeshStandardMaterial({ map: texAcero, metalness: 0.8, roughness: 0.35 }) },
+  { name: 'Pizarra',  snd: 300, mat: new THREE.MeshStandardMaterial({ map: texPizarra, roughness: 0.75 }) },
+  { name: 'Arena',    snd: 340, mat: new THREE.MeshStandardMaterial({ map: texArena, roughness: 0.8 }) },
 ];
-
-const TYPE_COLORS = [0xf6c9d3, 0xc4ecdc, 0xdcd3f3, 0xc8e0f7, 0xf7e6ad, 0xe3e7ec];
+// colores de efectos (halo, anillo del techo, chispas): versiones algo más claras para que se vean
+const TYPE_COLORS = [0x6a6e75, 0xf3f0ea, 0xd08a4a, 0xb4b9c0, 0x8794a0, 0xddcdb3];
 
 // ---------- Sombras de contacto ----------
 const shadowTex = canvasTex((g, w, h) => {
@@ -278,7 +278,7 @@ const wrist = makePanel(0.12, 0.06, { title: 0.36, body: 0.17 });
 // ---------- Instrucciones con dibujos animados (sin texto) ----------
 // Izquierda: la pinza coge la bola y al abrir la mano se lanza.
 // Derecha: juntar los puños y separarlos saca la raqueta; repetirlo la guarda.
-const HOW_INK = '#2a2d33', HOW_SKIN = '#f4f5f7', HOW_BALL = '#f4b4c4', HOW_RK = '#9fd3f5';
+const HOW_INK = '#2a2d33', HOW_SKIN = '#f4f5f7', HOW_BALL = '#b87333', HOW_RK = '#8a8f96';
 const ease = k => k < 0 ? 0 : k > 1 ? 1 : k * k * (3 - 2 * k);
 const seg = (t, a, b) => ease((t - a) / (b - a));
 const lerpN = (a, b, k) => a + (b - a) * k;
@@ -461,7 +461,7 @@ const occluderMat = new THREE.ShaderMaterial({
   fragmentShader: `void main(){ gl_FragColor = vec4(0.); }`,
   colorWrite: false, side: THREE.DoubleSide,
 });
-const LABEL_COLOR = { floor: 0xbfe3ff, wall: 0xd9d2ff, ceiling: 0xeadcff, table: 0xc9f2dc, couch: 0xffe2c8, bed: 0xffe2c8, screen: 0xffd3e6 };
+const LABEL_COLOR = { floor: 0xe8d6c2, wall: 0xd9d3ca, ceiling: 0xcfc7bd, table: 0xe0b48c, couch: 0xd9c2a8, bed: 0xd9c2a8, screen: 0xc9b79c };
 
 const planes = new Map();   // XRPlane → datos
 const meshes = new Map();   // XRMesh → datos
@@ -861,7 +861,7 @@ function updateHands(frame, ref, dt) {
 
     const hp = holdWorld(H, H.ball ? H.ball.r : BALL_R, V());
     H.cur.visible = rk.holder !== H && gun.holder !== H; H.cur.position.copy(hp);
-    H.cur.material.color.set(H.ball ? 0xa9e4cf : H.raw ? 0xf6df94 : 0xffffff);
+    H.cur.material.color.set(H.ball ? 0xd08a4a : H.raw ? 0xece9e4 : 0xffffff);
     H.halo.visible = !!best && !H.ball;
     if (best) { H.halo.position.copy(best.pos); H.halo.scale.setScalar(best.r * 1.18); H.halo.material.color.set(TYPE_COLORS[best.t]); }
   }
@@ -951,7 +951,7 @@ function updateHeld(dt) {
 const rk = { holder: null, valid: false, p0: V(), p1: V(), q0: new THREE.Quaternion(), q1: new THREE.Quaternion(),
   M0: new THREE.Matrix4(), M1: new THREE.Matrix4(), group: new THREE.Group() };
 (function buildRacket() {
-  const g = rk.group, frameMat = new THREE.MeshStandardMaterial({ color: 0xf1f2f4, metalness: 0.1, roughness: 0.45 });
+  const g = rk.group, frameMat = new THREE.MeshStandardMaterial({ color: 0xb87333, metalness: 0.85, roughness: 0.3 });
   const ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.07, 10, 64), frameMat);
   ring.scale.set(RK.ax, RK.ay, RK.ax); ring.position.y = RK.hy; g.add(ring);
   const face = new THREE.Mesh(new THREE.CircleGeometry(1, 48), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.08, side: THREE.DoubleSide, depthWrite: false }));
@@ -960,14 +960,14 @@ const rk = { holder: null, valid: false, p0: V(), p1: V(), q0: new THREE.Quatern
   for (let x = -RK.ax + 0.016; x < RK.ax; x += 0.019) { const h = RK.ay * Math.sqrt(Math.max(0, 1 - (x / RK.ax) ** 2)); pts.push(x, RK.hy - h, 0, x, RK.hy + h, 0); }
   for (let y = -RK.ay + 0.016; y < RK.ay; y += 0.019) { const w = RK.ax * Math.sqrt(Math.max(0, 1 - (y / RK.ay) ** 2)); pts.push(-w, RK.hy + y, 0, w, RK.hy + y, 0); }
   const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
-  g.add(new THREE.LineSegments(sg, new THREE.LineBasicMaterial({ color: 0xf4fbff, transparent: true, opacity: 0.75 })));
-  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.016, 0.2, 16), new THREE.MeshStandardMaterial({ color: 0xbfcad8, roughness: 0.8 }));
+  g.add(new THREE.LineSegments(sg, new THREE.LineBasicMaterial({ color: 0xece9e4, transparent: true, opacity: 0.8 })));
+  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.016, 0.2, 16), new THREE.MeshStandardMaterial({ color: 0x2b2d31, roughness: 0.7 }));
   handle.position.y = 0.04; g.add(handle);
   const throat = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.012, RK.hy - RK.ay - 0.14, 10), frameMat);
   throat.position.y = 0.14 + (RK.hy - RK.ay - 0.14) / 2; g.add(throat);
   g.visible = false; scene.add(g);
 })();
-const pullLine = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 1, 10), new THREE.MeshBasicMaterial({ color: 0xdfe5ec, transparent: true, opacity: 0.9 }));
+const pullLine = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 1, 10), new THREE.MeshBasicMaterial({ color: 0xd08a4a, transparent: true, opacity: 0.9 }));
 pullLine.visible = false; scene.add(pullLine);
 const gest = { phase: 'idle', t: 0 };
 const _Y = new THREE.Vector3(0, 1, 0), _one = new THREE.Vector3(1, 1, 1);
@@ -1057,8 +1057,8 @@ const gun = { holder: null, group: new THREE.Group(), model: new THREE.Group(), 
 (function buildGun() {
   const g = gun.model;
   const mat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.45, metalness: 0.1, ...extra });
-  // pistola en blanco y pastel: cuerpo blanco, cañón y empuñadura azul cielo, detalles rosa y crema
-  const orange = mat(0xf1f2f4), blue = mat(0xbfcad8), yellow = mat(0xe8d3d6), dark = mat(0xd3d7dd, { roughness: 0.7 });
+  // pistola: cuerpo grafito, cañón de acero, detalles de cobre
+  const orange = mat(0x2b2d31, { roughness: 0.55 }), blue = mat(0x8a8f96, { metalness: 0.8, roughness: 0.35 }), yellow = mat(0xb87333, { metalness: 0.85, roughness: 0.3 }), dark = mat(0x1f2124, { roughness: 0.7 });
   const add = (geo, m, x, y, z, rx = 0) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.rotation.x = rx; g.add(o); return o; };
   add(new THREE.BoxGeometry(0.075, 0.095, 0.27), orange, 0, 0.03, -0.1);                                  // cuerpo
   add(new THREE.BoxGeometry(0.08, 0.02, 0.2), yellow, 0, -0.022, -0.12);                                   // franja
@@ -1364,17 +1364,17 @@ const netTex = canvasTex((g, w, h) => {
   g.clearRect(0, 0, w, h);
   const step = 64, rope = (x0, y0, x1, y1) => {
     g.lineCap = 'round';
-    g.strokeStyle = 'rgba(140,146,156,0.75)'; g.lineWidth = 12; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
-    g.strokeStyle = '#f8f9fb'; g.lineWidth = 8; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
-    g.strokeStyle = 'rgba(205,211,219,0.9)'; g.lineWidth = 2; g.setLineDash([5, 6]); g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); g.setLineDash([]);
+    g.strokeStyle = 'rgba(20,21,24,0.85)'; g.lineWidth = 12; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+    g.strokeStyle = '#4a4d53'; g.lineWidth = 8; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+    g.strokeStyle = 'rgba(110,114,121,0.9)'; g.lineWidth = 2; g.setLineDash([5, 6]); g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); g.setLineDash([]);
   };
   for (let x = -h; x < w + h; x += step) { rope(x, 0, x + h, h); rope(x + h, 0, x, h); }
-  g.fillStyle = '#e4e8ed';
+  g.fillStyle = '#5c6067';
   for (let x = 0; x <= w; x += step) for (let y = 0; y <= h; y += step) { g.beginPath(); g.arc(x + (y / step % 2 ? step / 2 : 0), y, 8, 0, 7); g.fill(); }
 }, 512, 256);
 netTex.wrapT = THREE.RepeatWrapping;
 // Diana del fondo
-const RINGS = [[0.18, 100, '#e3c6cb'], [0.42, 50, '#f4f5f7'], [0.7, 30, '#c9d3df'], [1.0, 20, '#e2e5e9']];
+const RINGS = [[0.18, 100, '#b87333'], [0.42, 50, '#ece9e4'], [0.7, 30, '#5b6670'], [1.0, 20, '#2b2d31']];
 const dianaTex = canvasTex((g, w, h) => {
   const c = w / 2;
   for (let i = RINGS.length - 1; i >= 0; i--) {
@@ -1391,9 +1391,9 @@ function insideMat(depth) {
     vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
     fragmentShader: `uniform float uD; varying vec2 vUv;
       void main(){
-        vec3 c = mix(vec3(0.62, 0.65, 0.70), vec3(0.93, 0.94, 0.96), pow(vUv.y, 0.8));
+        vec3 c = mix(vec3(0.06, 0.065, 0.075), vec3(0.24, 0.25, 0.28), pow(vUv.y, 0.8));
         float hl = step(0.9, fract(vUv.y * uD / 0.1)), vl = step(0.93, fract(vUv.x * 32.0));
-        c *= 1.0 - 0.08 * max(hl, vl);
+        c *= 1.0 + 0.35 * max(hl, vl);
         gl_FragColor = vec4(c, 1.0); }`,
     side: THREE.BackSide });
 }
@@ -1405,9 +1405,9 @@ function netBasket(R, depth) {
   const net = new THREE.Mesh(new THREE.CylinderGeometry(R * 0.985, rB * 0.985, depth, 64, 1, true),
     new THREE.MeshStandardMaterial({ map: t, alphaTest: 0.35, side: THREE.DoubleSide, roughness: 0.85 }));
   net.position.y = -depth / 2;
-  const diana = new THREE.Mesh(new THREE.CircleGeometry(rB * 0.98, 64).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: dianaTex, color: 0xf2f2f2 }));
+  const diana = new THREE.Mesh(new THREE.CircleGeometry(rB * 0.98, 64).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: dianaTex, color: 0xdedad4 }));
   diana.position.y = -depth + 0.004;
-  const under = new THREE.Mesh(new THREE.CircleGeometry(rB, 64).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xdfe3e8 }));
+  const under = new THREE.Mesh(new THREE.CircleGeometry(rB, 64).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x2b2d31 }));
   under.position.y = -depth;
   g.add(wall, net, diana, under);
   return { g, net };
@@ -1415,10 +1415,10 @@ function netBasket(R, depth) {
 function makeHoop(pos, nH) {
   const g = new THREE.Group();
   g.position.copy(pos); g.quaternion.setFromUnitVectors(_hz, nH);
-  const orange = new THREE.MeshStandardMaterial({ color: 0xe3c9cd, metalness: 0.15, roughness: 0.45 });   // aro rosa empolvado
+  const orange = new THREE.MeshStandardMaterial({ color: 0xb87333, metalness: 0.85, roughness: 0.3 });   // aro de cobre
   g.add(new THREE.Mesh(new THREE.TorusGeometry(HR, 0.012, 12, 72).rotateX(Math.PI / 2), orange));
   const { g: nb, net } = netBasket(HR, NET_H); g.add(nb);
-  const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.012, 40).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xf4f5f7, roughness: 0.5 }));
+  const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.012, 40).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x2b2d31, roughness: 0.55 }));
   plate.position.set(0, -0.03, -(HR + 0.055)); g.add(plate);
   const arm = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.025, 0.06), orange); arm.position.set(0, 0, -(HR + 0.025)); g.add(arm);
   scene.add(g); g.updateMatrixWorld(true);
@@ -1520,7 +1520,7 @@ function updateProps(dt) {
         if (pts) {
           score += pts;
           const label = pts === 100 ? '¡DIANA! +100' : `¡CANASTA! +${pts}`;
-          floatText(label, new THREE.Vector3(S.P.c.x, S.P.top + 0.3, S.P.c.z), pts === 100 ? 0xd9b3ba : 0x9fb3c8, true);
+          floatText(label, new THREE.Vector3(S.P.c.x, S.P.top + 0.3, S.P.c.z), pts === 100 ? 0xe0a060 : 0xd08a4a, true);
           sndBasket(S.P.c, pts);
         }
         burst(new THREE.Vector3(S.x, S.y, S.z), TYPE_COLORS[S.ball.t], S.r);
@@ -1586,12 +1586,12 @@ void main(){
   float ph = fract(uv.x * 0.12 - uT * (0.25 + 0.35 * h1(vec2(1.0, id.y))) + h1(vec2(2.0, id.y)));
   float pv = fract(uv.y * 0.12 - uT * (0.25 + 0.35 * h1(vec2(id.x, 4.0))) + h1(vec2(id.x, 6.0)));
   float pulse = H * smoothstep(0.9, 1.0, ph) + Vt * smoothstep(0.9, 1.0, pv);
-  vec3 c = vec3(0.955, 0.962, 0.972);
-  c = mix(c, vec3(0.75, 0.80, 0.87), line * 0.9);
-  c = mix(c, vec3(0.88, 0.90, 0.93), chip);
-  c = mix(c, vec3(0.80, 0.73, 0.98), chip * (0.5 + 0.5 * sin(uT * 2.0 + h1(id) * 6.28)) * 0.4);
-  c = mix(c, vec3(0.68, 0.74, 0.83), node);
-  c = mix(c, vec3(0.70, 0.82, 0.94), clamp(pulse, 0.0, 1.0));
+  vec3 c = vec3(0.925, 0.912, 0.893);                                   // marfil
+  c = mix(c, vec3(0.36, 0.38, 0.42), line * 0.85);                       // pistas grafito
+  c = mix(c, vec3(0.80, 0.78, 0.74), chip);
+  c = mix(c, vec3(0.72, 0.45, 0.20), chip * (0.5 + 0.5 * sin(uT * 2.0 + h1(id) * 6.28)) * 0.35);
+  c = mix(c, vec3(0.24, 0.25, 0.28), node);
+  c = mix(c, vec3(0.85, 0.52, 0.22), clamp(pulse, 0.0, 1.0));             // pulsos de cobre
   gl_FragColor = vec4(c * uDim, 1.0);
 }`;
 function circuitMat(cell, dim = 1) {
@@ -1604,9 +1604,9 @@ const matrixObjs = [], quantumSpin = [];
 function addQ(o, order) { o.renderOrder = order; scene.add(o); matrixObjs.push(o); return o; }
 // "lámpara" de ordenador cuántico: discos plateados apilados, varillas, bobinas pastel y cúbits que brillan
 function quantumTower(x, z, scale) {
-  const g = new THREE.Group(), silver = new THREE.MeshStandardMaterial({ color: 0xf1f3f6, metalness: 0.6, roughness: 0.25, ...stencilEq });
-  const coil = new THREE.MeshStandardMaterial({ color: 0xd8cdf6, emissive: 0xc9b8f5, emissiveIntensity: 0.15, roughness: 0.5, ...stencilEq });
-  const qubit = new THREE.MeshStandardMaterial({ color: 0xdfe8f1, emissive: 0xbfcad8, emissiveIntensity: 0.45, ...stencilEq });
+  const g = new THREE.Group(), silver = new THREE.MeshStandardMaterial({ color: 0xb87333, metalness: 0.85, roughness: 0.28, ...stencilEq });
+  const coil = new THREE.MeshStandardMaterial({ color: 0x2b2d31, roughness: 0.5, ...stencilEq });
+  const qubit = new THREE.MeshStandardMaterial({ color: 0xf3efe8, emissive: 0xe0b48c, emissiveIntensity: 0.5, ...stencilEq });
   let y = 0; const radii = [0.75, 0.62, 0.5, 0.4, 0.3];
   radii.forEach((r, i) => {
     const disc = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.06, 48), silver); disc.position.y = y; g.add(disc);
@@ -1632,7 +1632,7 @@ function buildMatrix() {
   const N = 700, pos = new Float32Array(N * 3);
   for (let i = 0; i < N; i++) { const a = rnd(0, Math.PI * 2), d = half + rnd(0.3, 10); pos.set([c.x + Math.cos(a) * d, floorY + rnd(0, 6), c.z + Math.sin(a) * d], i * 3); }
   const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  matrixPts = addQ(new THREE.Points(pg, new THREE.PointsMaterial({ color: 0x9fd3f5, size: 0.03, transparent: true, opacity: 0.8, depthWrite: false, ...stencilEq })), -0.37);
+  matrixPts = addQ(new THREE.Points(pg, new THREE.PointsMaterial({ color: 0xc58a52, size: 0.03, transparent: true, opacity: 0.8, depthWrite: false, ...stencilEq })), -0.37);
 }
 function clearMatrix() {
   for (const o of matrixObjs) scene.remove(o);
@@ -1674,7 +1674,7 @@ function makeHole(P, pw, R) {
   const dc = new THREE.Mesh(geo, depthClearMat); dc.renderOrder = -0.5;
   // borde roto: verde digital por dentro, oscuro por fuera
   const rp = [], rc = [], ri = [];
-  ring.forEach(([x, z]) => { const k = rnd(1.1, 1.25); rp.push(x, 0.001, z, x * k, 0.001, z * k); rc.push(0.80, 0.86, 0.93, 0.74, 0.76, 0.79); });
+  ring.forEach(([x, z]) => { const k = rnd(1.1, 1.25); rp.push(x, 0.001, z, x * k, 0.001, z * k); rc.push(0.82, 0.52, 0.27, 0.17, 0.17, 0.19); });
   for (let i = 0; i < N; i++) { const a = i * 2, b = ((i + 1) % N) * 2; ri.push(a, a + 1, b + 1, a, b + 1, b); }
   const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.Float32BufferAttribute(rp, 3)); rg.setAttribute('color', new THREE.Float32BufferAttribute(rc, 3)); rg.setIndex(ri);
   const rim = new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.92, side: THREE.DoubleSide, depthWrite: false }));
@@ -1687,7 +1687,7 @@ function makeHole(P, pw, R) {
     while (rr < end) { rr += R * rnd(0.15, 0.35); a += rnd(-0.25, 0.25); const nx = Math.cos(a) * rr, nz = Math.sin(a) * rr; cp.push(x, 0.002, z, nx, 0.002, nz); x = nx; z = nz; }
   }
   const cg = new THREE.BufferGeometry(); cg.setAttribute('position', new THREE.Float32BufferAttribute(cp, 3));
-  const cracks = new THREE.LineSegments(cg, new THREE.LineBasicMaterial({ color: 0x8a9099, transparent: true, opacity: 0.7 }));
+  const cracks = new THREE.LineSegments(cg, new THREE.LineBasicMaterial({ color: 0x2b2d31, transparent: true, opacity: 0.75 }));
   cracks.renderOrder = 2;
   grp.add(mask, dc, rim, cracks); scene.add(grp);
   const c = new THREE.Vector3().setFromMatrixPosition(grp.matrix);
@@ -1698,7 +1698,7 @@ function makeHole(P, pw, R) {
 }
 const chunkGeo = new THREE.IcosahedronGeometry(1, 0), cubeGeo = new THREE.BoxGeometry(1, 1, 1);
 const plasterMat = new THREE.MeshStandardMaterial({ color: 0xeceae6, roughness: 0.95, flatShading: true });
-const digiMat = new THREE.MeshStandardMaterial({ color: 0xe8eef5, emissive: 0xbfcad8, emissiveIntensity: 0.25, flatShading: true });
+const digiMat = new THREE.MeshStandardMaterial({ color: 0xb87333, metalness: 0.85, roughness: 0.3, flatShading: true });
 function spawnDebris(c, n, R) {
   const N = Math.min(70, 16 + Math.floor(R * 120));
   const t1 = new THREE.Vector3().crossVectors(n, Math.abs(n.y) < 0.9 ? _Y : _hz).normalize(), t2 = new THREE.Vector3().crossVectors(n, t1);
@@ -1767,9 +1767,9 @@ function racketVsWalls(dt) {
 // derecho (o con el mando derecho). RESET: nueva partida · SCAN: volver a escanear · MUTE: música.
 const MENU_W = 0.2, MENU_H = 0.1;
 const MENU_BTNS = [
-  { id: 'reset', label: 'RESET', x: -0.064, color: '#efe1e3' },
-  { id: 'scan',  label: 'SCAN',  x: 0,      color: '#dfe6ee' },
-  { id: 'mute',  label: 'MUTE',  x: 0.064,  color: '#e1e9e4' },
+  { id: 'reset', label: 'RESET', x: -0.064, color: '#ece9e4' },
+  { id: 'scan',  label: 'SCAN',  x: 0,      color: '#e2ddd5' },
+  { id: 'mute',  label: 'MUTE',  x: 0.064,  color: '#ece9e4' },
 ];
 const BTN_W = 0.056, BTN_H = 0.056, BTN_Y = -0.012;
 const menu = makePanel(MENU_W, MENU_H);
@@ -1805,7 +1805,7 @@ function drawMenu() {
     const x0 = px(b.x - BTN_W / 2), y0 = py(BTN_Y + BTN_H / 2), bw = BTN_W * k, bh = BTN_H * k;
     const active = b.id === 'mute' && !musicOn, hot = menuHover === i, down = menuPressed === i || menuFlash.i === i;
     g.save(); if (down) { g.translate(x0 + bw / 2, y0 + bh / 2); g.scale(0.94, 0.94); g.translate(-x0 - bw / 2, -y0 - bh / 2); }
-    g.fillStyle = active ? '#e3c6cb' : b.color; g.beginPath(); g.roundRect(x0, y0, bw, bh, bh * 0.22); g.fill();
+    g.fillStyle = active ? '#dba878' : b.color; g.beginPath(); g.roundRect(x0, y0, bw, bh, bh * 0.22); g.fill();
     if (hot || down) { g.strokeStyle = 'rgba(40,45,52,0.55)'; g.lineWidth = 5; g.stroke(); }
     menuIcon(g, b.id, x0 + bw / 2, y0 + bh * 0.4, bh * 0.42, musicOn);
     g.fillStyle = '#3a3f47'; g.font = `650 ${bh * 0.17}px ${PANEL_FONT}`; g.fillText(b.label, x0 + bw / 2, y0 + bh * 0.82);
@@ -1941,7 +1941,7 @@ function loop(t, frame) {
     processGoals();
     processHoles();
     for (const b of [...balls]) if (b.inMatrix && now - b.inMatrix > 2.5) {   // absorbida por Matrix
-      score += 5; burst(b.pos, 0xbfe3ff, b.r); removeBall(b);
+      score += 5; burst(b.pos, 0xd08a4a, b.r); removeBall(b);
     }
     updateProps(dt); updateDebris(dt); updateMatrix(dt);
     const L = hands.left;   // panel de muñeca
