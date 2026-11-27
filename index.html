@@ -37,6 +37,8 @@
 <script>
   // modo sin internet: guarda el juego en las gafas la primera vez que se abre
   if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(e => console.warn('[bolas] sw', e)));
+  // pide al navegador que no borre la copia guardada del juego
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 </script>
 </body>
 </html>

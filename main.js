@@ -122,8 +122,10 @@ const PALETTES = {
     accent: 0xc57a5f, accent2: 0xd49a82, menuBtn: ['#efe8dd', '#e6ddd0', '#efe8dd'], menuActive: '#d49a82', how: ['#b5654a', '#5e7186'] },
 };
 const PAL_KEYS = Object.keys(PALETTES);
-let PAL = PALETTES.grafito, palKey = 'grafito';
-try { const k = localStorage.getItem('bolas-paleta'); if (PALETTES[k]) { PAL = PALETTES[k]; palKey = k; } } catch (e) {}
+// Nórdico por defecto; la que elijas en el menú se recuerda (clave nueva: todos empiezan en Nórdico una vez)
+const PAL_STORE = 'bolas-paleta-v2';
+let PAL = PALETTES.nordico, palKey = 'nordico';
+try { const k = localStorage.getItem(PAL_STORE); if (PALETTES[k]) { PAL = PALETTES[k]; palKey = k; } } catch (e) {}
 // textura de bola según el tipo de dibujo (sutil, para que se note el giro)
 function ballTex(B) {
   return canvasTex((g, w, h) => {
@@ -2091,8 +2093,8 @@ function paintTower() {
   PM.tower.qubit.color.setHex(T.qubit.c); PM.tower.qubit.emissive.setHex(T.qubit.e); PM.tower.qubit.emissiveIntensity = T.qubit.ei;
 }
 function applyPalette(key) {
-  PAL = PALETTES[key] || PALETTES.grafito; palKey = PALETTES[key] ? key : 'grafito';
-  try { localStorage.setItem('bolas-paleta', palKey); } catch (e) {}
+  PAL = PALETTES[key] || PALETTES.nordico; palKey = PALETTES[key] ? key : 'nordico';
+  try { localStorage.setItem(PAL_STORE, palKey); } catch (e) {}
   PAL.balls.forEach((B, i) => {
     const m = TYPES[i].mat, old = m.map;
     m.map = ballTex(B); setMat(m, { c: 0xffffff, metal: B.metal, rough: B.rough, clear: B.clear }); m.needsUpdate = true;
