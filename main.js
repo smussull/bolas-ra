@@ -354,56 +354,85 @@ function ball(g, x, y, r, a = 1) {
   g.globalAlpha = 1;
 }
 // mano de perfil: (px, py) = punta de la pinza; k = apertura (0 cerrada, 1 abierta)
-// ---- manos realistas: piel con degradado, falanges con pliegues y uñas ----
-const SKIN_L = '#f7dcc7', SKIN = '#e8b996', SKIN_D = '#c48a66', SKIN_LINE = 'rgba(122,74,48,0.8)', NAIL = '#f4dcd2';
-function skinGrad(g, x0, y0, x1, y1) { const gr = g.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, SKIN_L); gr.addColorStop(0.5, SKIN); gr.addColorStop(1, SKIN_D); return gr; }
-// dedo afilado a lo largo de sus articulaciones (pts), con punta redondeada, pliegues y uña
-function finger(g, pts, w0, w1, nail = true) {
-  const n = pts.length, L = [], R = [];
+// ---- manos en estilo grabado: contorno negro sobre blanco y sombras con tramado fino ----
+const ENG = '#1d1d1f';
+// tramado de líneas paralelas dentro de la intersección de varios recortes
+function hatch(g, clips, ang, gap, bbox, lw = 0.9, alpha = 0.85) {
+  g.save();
+  for (const f of clips) { g.beginPath(); f(); g.clip(); }
+  g.strokeStyle = `rgba(29,29,31,${alpha})`; g.lineWidth = lw;
+  const [x0, y0, x1, y1] = bbox, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, R = Math.hypot(x1 - x0, y1 - y0) / 2 + 4;
+  const dx = Math.cos(ang), dy = Math.sin(ang), nx = -dy, ny = dx;
+  for (let t = -R; t <= R; t += gap) { g.beginPath(); g.moveTo(cx + nx * t - dx * R, cy + ny * t - dy * R); g.lineTo(cx + nx * t + dx * R, cy + ny * t + dy * R); g.stroke(); }
+  g.restore();
+}
+function polyPath(g, P) { g.moveTo(P[0][0], P[0][1]); for (let i = 1; i < P.length; i++) g.lineTo(P[i][0], P[i][1]); g.closePath(); }
+// dedo: contorno suave por sus articulaciones, banda de sombra tramada en un lado, pliegues y uña
+function finger(g, pts, w0, w1, nail = true, side = 1) {
+  const n = pts.length, L = [], R = [], dirs = [];
   for (let i = 0; i < n; i++) {
     const a = pts[Math.max(0, i - 1)], b = pts[Math.min(n - 1, i + 1)];
-    let dx = b[0] - a[0], dy = b[1] - a[1]; const l = Math.hypot(dx, dy) || 1; dx /= l; dy /= l;
+    let dx = b[0] - a[0], dy = b[1] - a[1]; const l = Math.hypot(dx, dy) || 1; dx /= l; dy /= l; dirs.push([dx, dy]);
     const w = (w0 + (w1 - w0) * i / (n - 1)) / 2;
     L.push([pts[i][0] - dy * w, pts[i][1] + dx * w]); R.push([pts[i][0] + dy * w, pts[i][1] - dx * w]);
   }
   const t = pts[n - 1], p = pts[n - 2], ang = Math.atan2(t[1] - p[1], t[0] - p[0]);
-  g.beginPath(); g.moveTo(L[0][0], L[0][1]);
-  for (let i = 1; i < n; i++) { const m = [(L[i - 1][0] + L[i][0]) / 2, (L[i - 1][1] + L[i][1]) / 2]; g.quadraticCurveTo(L[i - 1][0], L[i - 1][1], m[0], m[1]); }
-  g.lineTo(L[n - 1][0], L[n - 1][1]);
-  g.arc(t[0], t[1], w1 / 2, ang + Math.PI / 2, ang - Math.PI / 2, true);
-  for (let i = n - 2; i >= 0; i--) { const m = [(R[i + 1][0] + R[i][0]) / 2, (R[i + 1][1] + R[i][1]) / 2]; g.quadraticCurveTo(R[i + 1][0], R[i + 1][1], m[0], m[1]); }
-  g.lineTo(R[0][0], R[0][1]); g.closePath();
-  const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]);
-  g.fillStyle = skinGrad(g, Math.min(...xs), Math.min(...ys) - w0, Math.max(...xs), Math.max(...ys) + w0); g.fill();
-  g.strokeStyle = SKIN_LINE; g.lineWidth = 2.2; g.stroke();
-  g.strokeStyle = 'rgba(122,74,48,0.45)'; g.lineWidth = 1.6;           // pliegues de las articulaciones
+  const path = (close = true) => {
+    g.moveTo(L[0][0], L[0][1]);
+    for (let i = 1; i < n; i++) { const m = [(L[i - 1][0] + L[i][0]) / 2, (L[i - 1][1] + L[i][1]) / 2]; g.quadraticCurveTo(L[i - 1][0], L[i - 1][1], m[0], m[1]); }
+    g.lineTo(L[n - 1][0], L[n - 1][1]);
+    g.arc(t[0], t[1], w1 / 2, ang + Math.PI / 2, ang - Math.PI / 2, true);
+    for (let i = n - 2; i >= 0; i--) { const m = [(R[i + 1][0] + R[i][0]) / 2, (R[i + 1][1] + R[i][1]) / 2]; g.quadraticCurveTo(R[i + 1][0], R[i + 1][1], m[0], m[1]); }
+    g.lineTo(R[0][0], R[0][1]); if (close) g.closePath();
+  };
+  g.beginPath(); path(); g.fillStyle = '#ffffff'; g.fill();
+  // banda de sombra a lo largo del lado en sombra (side 1 = lado R)
+  const E = side > 0 ? R : L, band = [...E, ...pts.map((q, i) => [q[0] + (E[i][0] - q[0]) * 0.15, q[1] + (E[i][1] - q[1]) * 0.15]).reverse()];
+  const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]), bb = [Math.min(...xs) - w0, Math.min(...ys) - w0, Math.max(...xs) + w0, Math.max(...ys) + w0];
+  hatch(g, [path, () => polyPath(g, band)], ang + Math.PI / 2.6, 2.6, bb);
+  g.beginPath(); path(false); g.strokeStyle = ENG; g.lineWidth = 1.9; g.lineJoin = 'round'; g.stroke();   // sin trazo en la base: se funde con la palma
+  g.strokeStyle = 'rgba(29,29,31,0.7)'; g.lineWidth = 1.2;                    // pliegues de las articulaciones
   for (let i = 1; i < n - 1; i++) {
-    const a = pts[i - 1], b = pts[i + 1]; let dx = b[0] - a[0], dy = b[1] - a[1]; const l = Math.hypot(dx, dy) || 1; dx /= l; dy /= l;
-    const w = (w0 + (w1 - w0) * i / (n - 1)) * 0.3;
-    g.beginPath(); g.moveTo(pts[i][0] - dy * w, pts[i][1] + dx * w); g.quadraticCurveTo(pts[i][0] + dx * 2, pts[i][1] + dy * 2, pts[i][0] + dy * w, pts[i][1] - dx * w); g.stroke();
+    const [dx, dy] = dirs[i], w = (w0 + (w1 - w0) * i / (n - 1)) * 0.28;
+    g.beginPath(); g.moveTo(pts[i][0] - dy * w, pts[i][1] + dx * w); g.quadraticCurveTo(pts[i][0] + dx * 2.5, pts[i][1] + dy * 2.5, pts[i][0] + dy * w * 0.4, pts[i][1] - dx * w * 0.4); g.stroke();
   }
-  if (nail) {                                                          // uña
-    g.save(); g.translate(t[0] - Math.cos(ang) * w1 * 0.32, t[1] - Math.sin(ang) * w1 * 0.32); g.rotate(ang);
-    g.fillStyle = NAIL; g.strokeStyle = 'rgba(160,110,90,0.7)'; g.lineWidth = 1.4;
-    g.beginPath(); g.ellipse(0, -w1 * 0.08, w1 * 0.36, w1 * 0.27, 0, 0, 7); g.fill(); g.stroke(); g.restore();
+  if (nail) {                                                                  // uña con su lúnula
+    g.save(); g.translate(t[0] - Math.cos(ang) * w1 * 0.3, t[1] - Math.sin(ang) * w1 * 0.3); g.rotate(ang);
+    g.strokeStyle = ENG; g.lineWidth = 1.3;
+    g.beginPath(); g.moveTo(-w1 * 0.36, -w1 * 0.3); g.quadraticCurveTo(w1 * 0.42, -w1 * 0.36, w1 * 0.42, 0); g.quadraticCurveTo(w1 * 0.42, w1 * 0.36, -w1 * 0.36, w1 * 0.3);
+    g.quadraticCurveTo(-w1 * 0.46, 0, -w1 * 0.36, -w1 * 0.3); g.stroke();
+    g.restore();
   }
 }
 // mano de perfil (lado del pulgar): (px, py) = punta de la pinza; k = apertura (0 cerrada, 1 abierta)
 function pinchHand(g, px, py, k) {
-  finger(g, [[px - 250, py + 108], [px - 200, py + 80], [px - 150, py + 50]], 50, 46, false);   // antebrazo
-  g.beginPath();                                                                                // palma y dorso
-  g.moveTo(px - 158, py + 24);
-  g.bezierCurveTo(px - 128, py - 10, px - 96, py - 16, px - 68, py - 10);
-  g.lineTo(px - 60, py + 12);
-  g.bezierCurveTo(px - 66, py + 42, px - 88, py + 64, px - 120, py + 70);
-  g.bezierCurveTo(px - 142, py + 72, px - 156, py + 64, px - 160, py + 50); g.closePath();
-  g.fillStyle = skinGrad(g, px - 150, py - 15, px - 80, py + 75); g.fill(); g.strokeStyle = SKIN_LINE; g.lineWidth = 2.2; g.stroke();
-  for (let i = 2; i >= 0; i--)                                                                  // corazón, anular y meñique doblados
-    finger(g, [[px - 74, py + 10 + i * 13], [px - 52, py + 14 + i * 13], [px - 46, py + 30 + i * 11], [px - 58, py + 40 + i * 9]], 16 - i, 13 - i, false);
-  finger(g, [[px - 72, py - 2], [px - 46, py - 6 - 10 * k], [px - 22, py - 9 - 20 * k], [px - 5, py - 8 - 30 * k]], 19, 14);       // índice
-  finger(g, [[px - 128, py + 50], [px - 84, py + 54], [px - 42, py + 40 + 10 * k], [px - 8, py + 12 + 26 * k]], 25, 17);         // pulgar
-  g.strokeStyle = 'rgba(122,74,48,0.35)'; g.lineWidth = 1.5;                                    // tendón y nudillo
-  g.beginPath(); g.moveTo(px - 140, py + 18); g.quadraticCurveTo(px - 110, py + 4, px - 78, py + 2); g.stroke();
+  // antebrazo que se estrecha hacia la muñeca (contorno abierto, como en un grabado)
+  const top = [[px - 300, py + 80], [px - 230, py + 50], [px - 175, py + 30], [px - 148, py + 24]];
+  const bot = [[px - 150, py + 62], [px - 185, py + 78], [px - 245, py + 110], [px - 300, py + 140]];
+  const arm = () => { g.moveTo(...top[0]); g.bezierCurveTo(...top[1], ...top[2], ...top[3]); g.lineTo(...bot[0]); g.bezierCurveTo(...bot[1], ...bot[2], ...bot[3]); g.closePath(); };
+  g.beginPath(); arm(); g.fillStyle = '#fff'; g.fill();
+  hatch(g, [arm, () => { g.ellipse(px - 230, py + 112, 95, 20, -0.42, 0, 7); }], -2.25, 2.8, [px - 300, py, px - 140, py + 150]);
+  g.strokeStyle = ENG; g.lineWidth = 1.9;
+  g.beginPath(); g.moveTo(...top[0]); g.bezierCurveTo(...top[1], ...top[2], ...top[3]); g.stroke();
+  g.beginPath(); g.moveTo(...bot[0]); g.bezierCurveTo(...bot[1], ...bot[2], ...bot[3]); g.stroke();
+  g.strokeStyle = 'rgba(29,29,31,0.45)'; g.lineWidth = 1;                     // músculos del antebrazo
+  g.beginPath(); g.moveTo(px - 290, py + 100); g.quadraticCurveTo(px - 230, py + 72, px - 170, py + 48); g.stroke();
+  // dorso y palma: forma orgánica; sin trazo en el lado de la muñeca para que se una al brazo
+  const palm = () => { g.moveTo(px - 150, py + 24); g.bezierCurveTo(px - 122, py - 6, px - 96, py - 14, px - 70, py - 8);
+    g.bezierCurveTo(px - 60, py - 2, px - 58, py + 8, px - 62, py + 16); g.bezierCurveTo(px - 70, py + 44, px - 92, py + 64, px - 122, py + 68);
+    g.bezierCurveTo(px - 136, py + 69, px - 146, py + 66, px - 152, py + 60); g.closePath(); };
+  g.beginPath(); palm(); g.fillStyle = '#fff'; g.fill();
+  hatch(g, [palm, () => { g.ellipse(px - 104, py + 60, 58, 17, -0.2, 0, 7); }], -2.3, 2.5, [px - 160, py - 20, px - 55, py + 75]);
+  g.strokeStyle = ENG; g.lineWidth = 1.9;
+  g.beginPath(); g.moveTo(px - 150, py + 24); g.bezierCurveTo(px - 122, py - 6, px - 96, py - 14, px - 70, py - 8); g.stroke();
+  g.beginPath(); g.moveTo(px - 62, py + 16); g.bezierCurveTo(px - 70, py + 44, px - 92, py + 64, px - 122, py + 68); g.bezierCurveTo(px - 136, py + 69, px - 146, py + 66, px - 152, py + 60); g.stroke();
+  g.strokeStyle = 'rgba(29,29,31,0.5)'; g.lineWidth = 1.1;                    // tendones del dorso
+  for (const [y0, y1] of [[16, 0], [26, 10]]) { g.beginPath(); g.moveTo(px - 140, py + y0); g.quadraticCurveTo(px - 108, py + y0 - 12, px - 80, py + y1); g.stroke(); }
+  for (let i = 2; i >= 0; i--)                                                 // corazón, anular y meñique doblados
+    finger(g, [[px - 78 - i * 3, py + 12 + i * 12], [px - 56 - i * 3, py + 16 + i * 12], [px - 50 - i * 3, py + 30 + i * 10], [px - 60 - i * 3, py + 39 + i * 8]], 15 - i, 12 - i, true, 1);
+  finger(g, [[px - 76, py - 2], [px - 48, py - 6 - 10 * k], [px - 24, py - 9 - 20 * k], [px - 5, py - 8 - 30 * k]], 18, 12, true, 1);     // índice
+  // pulgar: grueso en la base (eminencia tenar) y afinándose con una curva hasta la punta
+  finger(g, [[px - 136, py + 56], [px - 104, py + 62], [px - 70, py + 56 + 4 * k], [px - 40, py + 40 + 12 * k], [px - 9, py + 14 + 26 * k]], 28, 15, true, -1);
 }
 function drawGrab(g, t) {
   const B = [250, 210];
@@ -434,20 +463,39 @@ function drawGrab(g, t) {
   }
 }
 // puño de frente (sd = -1 izquierdo, 1 derecho)
-// puño de frente, con los dedos doblados hacia el espectador (sd = -1 izquierdo, 1 derecho)
+// puño de frente en estilo grabado: nudillos en arco, dedos plegados y pulgar cruzado (sd = -1 izquierdo, 1 derecho)
 function fist(g, cx, cy, sd, a = 1) {
   g.globalAlpha = a;
-  finger(g, [[cx + sd * 14, cy + 160], [cx + sd * 6, cy + 100], [cx, cy + 42]], 46, 50, false);   // antebrazo
-  g.beginPath(); g.roundRect(cx - 42, cy - 30, 84, 74, 24);                                        // mano
-  g.fillStyle = skinGrad(g, cx - 42, cy - 30, cx + 42, cy + 44); g.fill(); g.strokeStyle = SKIN_LINE; g.lineWidth = 2.2; g.stroke();
-  for (let i = 0; i < 4; i++) {                                                                    // cuatro dedos doblados
-    const x = cx - 31 + i * 20.5, top = cy - 36 + (i === 0 || i === 3 ? 5 : 0), h = 40 - (i === 3 ? 6 : 0);
-    g.beginPath(); g.roundRect(x - 10, top, 20, h, 9);
-    g.fillStyle = skinGrad(g, x - 10, top, x + 10, top + h); g.fill(); g.strokeStyle = SKIN_LINE; g.lineWidth = 2; g.stroke();
-    g.strokeStyle = 'rgba(122,74,48,0.45)'; g.lineWidth = 1.5;                                     // pliegue de la articulación
-    g.beginPath(); g.moveTo(x - 6, top + h * 0.52); g.quadraticCurveTo(x, top + h * 0.58, x + 6, top + h * 0.52); g.stroke();
+  // antebrazo que se ensancha hacia abajo
+  const lt = [cx - 22, cy + 40], rt = [cx + 24, cy + 40];
+  const arm = () => { g.moveTo(...lt); g.bezierCurveTo(cx - 26 + sd * 3, cy + 90, cx - 30 + sd * 8, cy + 130, cx - 32 + sd * 12, cy + 175);
+    g.lineTo(cx + 34 + sd * 12, cy + 175); g.bezierCurveTo(cx + 32 + sd * 8, cy + 130, cx + 28 + sd * 3, cy + 90, ...rt); g.closePath(); };
+  g.beginPath(); arm(); g.fillStyle = '#fff'; g.fill();
+  hatch(g, [arm, () => { g.rect(cx + sd * 12 - 16, cy + 40, 32, 140); }], sd > 0 ? -1.25 : -1.9, 2.8, [cx - 40, cy + 30, cx + 50, cy + 180]);
+  g.strokeStyle = ENG; g.lineWidth = 1.9;
+  g.beginPath(); g.moveTo(...lt); g.bezierCurveTo(cx - 26 + sd * 3, cy + 90, cx - 30 + sd * 8, cy + 130, cx - 32 + sd * 12, cy + 175); g.stroke();
+  g.beginPath(); g.moveTo(...rt); g.bezierCurveTo(cx + 28 + sd * 3, cy + 90, cx + 32 + sd * 8, cy + 130, cx + 34 + sd * 12, cy + 175); g.stroke();
+  // mano: más ancha en los nudillos, estrechándose hacia la muñeca
+  const hand = () => { g.moveTo(cx - 40, cy - 14); g.quadraticCurveTo(cx, cy - 30, cx + 40, cy - 14);
+    g.bezierCurveTo(cx + 46, cy + 10, cx + 36, cy + 34, cx + 25, cy + 44); g.lineTo(cx - 23, cy + 44);
+    g.bezierCurveTo(cx - 36, cy + 34, cx - 46, cy + 10, cx - 40, cy - 14); g.closePath(); };
+  g.beginPath(); hand(); g.fillStyle = '#fff'; g.fill();
+  hatch(g, [hand, () => { g.ellipse(cx + sd * 30, cy + 22, 20, 34, 0, 0, 7); }], -2.1, 2.5, [cx - 48, cy - 32, cx + 48, cy + 46]);
+  g.beginPath(); hand(); g.strokeStyle = ENG; g.lineWidth = 1.9; g.stroke();
+  // dedos plegados: falange media, con el corazón algo más alto
+  const H = [30, 36, 34, 27], X = [-29, -10, 10, 28], T = [-28, -34, -33, -25];
+  for (let i = 0; i < 4; i++) {
+    const x = cx + X[i], top = cy + T[i], h = H[i], w = i === 3 ? 17 : 19.5;
+    const seg = () => { g.roundRect(x - w / 2, top, w, h, w * 0.48); };
+    g.beginPath(); seg(); g.fillStyle = '#fff'; g.fill();
+    hatch(g, [seg, () => { g.rect(x + w * 0.15, top, w * 0.4, h); }], -2.0, 2.3, [x - 12, top, x + 12, top + h]);
+    g.beginPath(); seg(); g.strokeStyle = ENG; g.lineWidth = 1.7; g.stroke();
+    g.strokeStyle = 'rgba(29,29,31,0.65)'; g.lineWidth = 1.1;
+    g.beginPath(); g.moveTo(x - w * 0.3, top + h * 0.58); g.quadraticCurveTo(x, top + h * 0.66, x + w * 0.28, top + h * 0.58); g.stroke();   // pliegue
+    g.beginPath(); g.arc(x, top + 6, w * 0.26, Math.PI * 1.15, Math.PI * 1.85); g.stroke();                                               // nudillo
   }
-  finger(g, [[cx - sd * 46, cy + 30], [cx - sd * 22, cy + 22], [cx + sd * 4, cy + 14], [cx + sd * 20, cy + 10]], 24, 18);   // pulgar por delante
+  // pulgar cruzado por delante, curvado y afinándose
+  finger(g, [[cx - sd * 44, cy + 34], [cx - sd * 26, cy + 22], [cx - sd * 4, cy + 12], [cx + sd * 16, cy + 6]], 26, 16, true, sd > 0 ? 1 : -1);
   g.globalAlpha = 1;
 }
 function racketPic(g, cx, cy, sc) {
